@@ -30,11 +30,6 @@
     input[type=number] {
       -moz-appearance: textfield;
     }
-    @keyframes pulseGlow {
-      0% { box-shadow: 0 0 0 0 rgba(76, 154, 107, 0.4); }
-      70% { box-shadow: 0 0 0 10px rgba(76, 154, 107, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(76, 154, 107, 0); }
-    }
   </style>
 </head>
 <body>
@@ -183,42 +178,48 @@
       return round1(baseNumeric(phase, key) + delta);
     }
 
-    // Exercises metadata with rest times & techniques
+    // Exercises metadata with rest times, tips & animation GIFs
     const EXERCISES = [
       { key: "squat", name: "Приседания с гантелями", reps: "12–15", type: "big", restSec: 90,
-        tip: "Держи гантели в опущенных руках или на плечах. Спина прямая, приседай до параллели бедра с полом.",
-        discSetup: (w) => w === 6 ? "по 1 диск 3 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
+        gif: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Squat.gif",
+        tip: "Держи гантели в опущенных руках или у плеч. Спина прямая, таз отводи назад, приседай до параллели бедра с полом.",
+        discSetup: (w) => w === 6 ? "по 1 диске 3 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "row", name: "Тяга гантели в наклоне", reps: "10–12", type: "big", restSec: 90,
-        tip: "Опрись коленом и рукой на диван/стул. Тяни гантель к поясу, ощущая сжатие лопатки.",
-        discSetup: (w) => w === 5 ? "по 1 диск 2.5 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
+        gif: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Row.gif",
+        tip: "Опрись коленом и рукой на диван/стул. Корпус параллелен полу. Тяни гантель к поясу, ощущая сжатие лопатки.",
+        discSetup: (w) => w === 5 ? "по 1 диске 2.5 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "floor", name: "Жим гантелей лёжа на полу", reps: "10–12", type: "big", restSec: 90,
-        tip: "Лёжа на спине на коврике. Локти под углом 45° к корпусу, выжимай гантели вверх над грудью.",
-        discSetup: (w) => w === 5 ? "по 1 диск 2.5 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
+        gif: "https://fitnessprogramer.com/wp-content/uploads/2021/06/Dumbbell-Floor-Press.gif",
+        tip: "Лёжа на спине на коврике, ноги согнуты. Локти под углом 45° к корпусу, выжимай гантели вверх над грудью.",
+        discSetup: (w) => w === 5 ? "по 1 диске 2.5 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "ohp", name: "Жим гантелей стоя над головой", reps: "10–12", type: "big", restSec: 75,
-        tip: "Стоя, пресс напряжён. Выжимай гантели вверх от плеч над головой, не прогибая поясницу.",
-        discSetup: (w) => w === 2.5 ? "по 1 диск 1.25 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
+        gif: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Shoulder-Press.gif",
+        tip: "Стоя, пресс и ягодицы напряжены. Выжимай гантели вверх от плеч над головой, не прогибая поясницу.",
+        discSetup: (w) => w === 2.5 ? "по 1 диске 1.25 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "curl", name: "Сгибания на бицепс", reps: "12–15", type: "iso", restSec: 60,
-        tip: "Стоя, локти прижаты к туловищу. Поднимай гантели разворачивая кисти ладонями к себе.",
-        discSetup: (w) => w === 2.5 ? "по 1 диск 1.25 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
+        gif: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Bicep-Curl.gif",
+        tip: "Стоя, локти зафиксированы у туловища. Поднимай гантели плавным движением, разворачивая кисти к себе.",
+        discSetup: (w) => w === 2.5 ? "по 1 диске 1.25 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "tricep", name: "Разгибание на трицепс из-за головы", reps: "12–15", type: "iso", restSec: 60,
-        tip: "Возьми 1 гантель ОБЕИМИ руками за блин, подняв над головой. Опускай за голову и разгибай вверх.",
+        gif: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Triceps-Extension.gif",
+        tip: "Возьми 1 гантель ОБЕИМИ руками за блин, подняв над головой. Опускай за голову и полностью разгибай вверх.",
         discSetup: (w) => w === 2.5 ? "1 гантель с 2 дисками по 1.25 кг (всего 2.5 кг)" : `1 гантель весом ${w} кг` },
     ];
 
-    // Day styles with distinct theme colors
+    // Day styles with Coral Red, Deep Purple & Emerald Green
     const DAYS = [
-      { key: "mon", label: "День 1", color: "#C0392B", bgGrad: "linear-gradient(135deg, rgba(192,57,43,0.12) 0%, rgba(29,24,21,1) 100%)" },
-      { key: "wed", label: "День 2", color: "#D35400", bgGrad: "linear-gradient(135deg, rgba(211,84,0,0.12) 0%, rgba(29,24,21,1) 100%)" },
-      { key: "fri", label: "День 3", color: "#27AE60", bgGrad: "linear-gradient(135deg, rgba(39,174,96,0.12) 0%, rgba(29,24,21,1) 100%)" },
+      { key: "mon", label: "День 1", color: "#C0392B", bgGrad: "linear-gradient(135deg, rgba(192,57,43,0.15) 0%, rgba(29,24,21,1) 100%)" },
+      { key: "wed", label: "День 2", color: "#8E44AD", bgGrad: "linear-gradient(135deg, rgba(142,68,173,0.15) 0%, rgba(29,24,21,1) 100%)" },
+      { key: "fri", label: "День 3", color: "#27AE60", bgGrad: "linear-gradient(135deg, rgba(39,174,96,0.15) 0%, rgba(29,24,21,1) 100%)" },
     ];
 
     function workoutFor(phase, week, overrides) {
       const list = EXERCISES.map((ex) => ({
-        key: ex.key, name: ex.name, reps: ex.reps, restSec: ex.restSec, tip: ex.tip, discSetup: ex.discSetup,
+        key: ex.key, name: ex.name, reps: ex.reps, restSec: ex.restSec, tip: ex.tip, discSetup: ex.discSetup, gif: ex.gif,
         weight: effectiveWeight(ex.key, week, overrides),
         sets: ex.type === "big" ? phase.sets.big : phase.sets.iso,
       }));
-      list.push({ key: "plank", name: "Планка", reps: `${phase.plankSec} сек`, restSec: 60, tip: "Планка на предплечьях. Корпус прямой как натянутая струна.", weight: null, sets: 3, isTime: true });
+      list.push({ key: "plank", name: "Планка", reps: `${phase.plankSec} сек`, restSec: 60, tip: "Планка на предплечьях. Корпус прямой как натянутая струна, пресс сжат.", gif: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Plank.gif", weight: null, sets: 3, isTime: true });
       return list;
     }
 
@@ -261,18 +262,26 @@
       done: "#4C9A6B", text: "#F2EDE7", textMuted: "#A79D92", textFaint: "#6E655B",
     };
 
-    // Modal Info Popup
+    // Modal Info Popup with Animated GIF
     function InfoModal({ exercise, onClose }) {
       if (!exercise) return null;
       return (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
              onClick={onClose}>
-          <div style={{ background: C.surface, border: `1px solid ${C.accent}`, borderRadius: 16, padding: "20px 22px", maxWidth: 440, width: "100%", color: C.text }}
+          <div style={{ background: C.surface, border: `1px solid ${C.accent}`, borderRadius: 16, padding: "20px 20px", maxWidth: 440, width: "100%", color: C.text, maxHeight: "90vh", overflowY: "auto" }}
                onClick={(e) => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontSize: 17, fontWeight: 800, color: C.accent }}>ℹ {exercise.name}</span>
-              <button onClick={onClose} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 20, cursor: "pointer" }}>✕</button>
+              <span style={{ fontSize: 17, fontWeight: 800, color: C.accent }}>{exercise.name}</span>
+              <button onClick={onClose} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 22, cursor: "pointer", padding: "0 4px" }}>✕</button>
             </div>
+
+            {/* Animation GIF */}
+            {exercise.gif && (
+              <div style={{ width: "100%", height: 210, background: "#110E0C", borderRadius: 12, overflow: "hidden", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.border}` }}>
+                <img src={exercise.gif} alt={exercise.name} loading="lazy" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+              </div>
+            )}
+
             {exercise.discSetup && (
               <div style={{ background: C.surfaceRaised, padding: "10px 12px", borderRadius: 8, marginBottom: 12, fontSize: 13, color: C.text }}>
                 💡 <b>Сборка гантели:</b> {exercise.discSetup(exercise.weight)}
@@ -285,7 +294,7 @@
             <div style={{ fontSize: 12.5, color: C.textFaint }}>
               ⏱ Рекомендуемый отдых между подходами: <b>{exercise.restSec || 60} сек</b>
             </div>
-            <button onClick={onClose} style={{ width: "100%", marginTop: 16, padding: "10px 0", background: C.accent, color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>
+            <button onClick={onClose} style={{ width: "100%", marginTop: 16, padding: "12px 0", background: C.accent, color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
               Понятно
             </button>
           </div>
@@ -333,7 +342,7 @@
       const [editing, setEditing] = useState(false);
       const [draft, setDraft] = useState("");
       if (isTime || value == null) {
-        return <span style={{ fontSize: 12.5, color: C.textMuted, fontFamily: "ui-monospace, monospace" }}>без веса</span>;
+        return <span style={{ fontSize: 12, color: C.textMuted, fontFamily: "ui-monospace, monospace" }}>без веса</span>;
       }
       if (editing) {
         return (
@@ -380,7 +389,7 @@
       if (secondsLeft <= 0) {
         return (
           <span style={{ fontSize: 11, color: C.done, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "rgba(76,154,107,0.15)" }}>
-            ✓ Пора делать подход!
+            ✓ Пора подход!
           </span>
         );
       }
@@ -392,41 +401,49 @@
       );
     }
 
+    // Clean Layout Row for Exercise
     function ExerciseRow({ ex, checks, onToggleSet, onWeightChange, onOpenInfo, activeTimerIndex, setActiveTimerIndex }) {
       return (
-        <div style={{ padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6, gap: 8 }}>
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 14.5, color: C.text, fontWeight: 600 }}>{ex.name}</span>
-              <button onClick={() => onOpenInfo(ex)} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 13, cursor: "pointer", padding: "0 2px" }}>
+        <div style={{ padding: "11px 0", borderBottom: `1px solid ${C.border}` }}>
+          {/* Top Line: Name + Info Icon + Reps */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", pr: 4 }}>
+              <span style={{ fontSize: 14.5, color: C.text, fontWeight: 600, lineHeight: 1.3 }}>{ex.name}</span>
+              <button onClick={() => onOpenInfo(ex)} style={{ background: "rgba(255,255,255,0.08)", border: `1px solid ${C.border}`, borderRadius: 12, width: 22, height: 22, color: C.textMuted, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 ⓘ
               </button>
-            </span>
-            <span style={{ display: "flex", alignItems: "baseline", gap: 6, whiteSpace: "nowrap" }}>
-              <EditableWeight value={ex.weight} isTime={ex.isTime} onSave={(v) => onWeightChange(ex.key, v)} />
-              <span style={{ fontSize: 12.5, color: C.textFaint }}>· {ex.reps}</span>
+            </div>
+            <span style={{ fontSize: 12, color: C.textFaint, flexShrink: 0, fontWeight: 500 }}>
+              {ex.reps}
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            {checks.map((c, i) => (
-              <React.Fragment key={i}>
-                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <CheckBox checked={c} onClick={() => {
-                    onToggleSet(ex.key, i);
-                    if (!c && i < checks.length - 1) {
-                      setActiveTimerIndex(i);
-                    }
-                  }} size={22} />
-                  <span style={{ fontSize: 11, color: C.textFaint }}>{i + 1}</span>
-                </div>
+          {/* Bottom Line: Weight on left, Set Checkboxes + Rest Timer on right */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              {checks.map((c, i) => (
+                <React.Fragment key={i}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <CheckBox checked={c} onClick={() => {
+                      onToggleSet(ex.key, i);
+                      if (!c && i < checks.length - 1) {
+                        setActiveTimerIndex(i);
+                      }
+                    }} size={22} />
+                    <span style={{ fontSize: 11, color: C.textFaint }}>{i + 1}</span>
+                  </div>
 
-                {/* Show Rest Timer right after checked set */}
-                {c && i < checks.length - 1 && !checks[i + 1] && activeTimerIndex === i && (
-                  <RestTimer durationSec={ex.restSec || 60} onFinish={() => setActiveTimerIndex(null)} />
-                )}
-              </React.Fragment>
-            ))}
+                  {/* Rest Timer */}
+                  {c && i < checks.length - 1 && !checks[i + 1] && activeTimerIndex === i && (
+                    <RestTimer durationSec={ex.restSec || 60} onFinish={() => setActiveTimerIndex(null)} />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+
+            <div style={{ flexShrink: 0 }}>
+              <EditableWeight value={ex.weight} isTime={ex.isTime} onSave={(v) => onWeightChange(ex.key, v)} />
+            </div>
           </div>
         </div>
       );
@@ -464,7 +481,7 @@
         <div style={{
           background: day.bgGrad || C.surface,
           border: `1.5px solid ${allDone ? C.done : day.color}`,
-          borderRadius: 14, padding: "16px 18px", marginBottom: 16,
+          borderRadius: 14, padding: "16px 16px", marginBottom: 16,
           boxShadow: allDone ? "0 4px 14px rgba(76,154,107,0.15)" : "none",
           transition: "border-color 200ms, box-shadow 200ms"
         }}>
@@ -742,7 +759,7 @@
               <PlateBadge week={week} weeksIntoPhase={weeksIntoPhase} phaseLength={phase.weeks.length} />
               <div style={{ marginTop: 12 }}>
                 <div style={{ fontSize: 12, letterSpacing: "0.14em", color: C.accent, fontWeight: 800, marginBottom: 4 }}>{phase.label.toUpperCase()}</div>
-                <div style={{ fontSize: 12.5, color: C.textMuted }}>Редактируйте веса через значок ✎ (нажмите ⓘ для схемы сборки)</div>
+                <div style={{ fontSize: 12.5, color: C.textMuted }}>Редактируйте веса через значок ✎ (нажмите ⓘ для схемы и GIF-анимации)</div>
                 {justAdvanced && (
                   <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(76,154,107,0.2)", border: `1px solid ${C.done}`, borderRadius: 8, fontSize: 13.5, color: C.done, fontWeight: 700 }}>
                     🎉 Неделя {week} успешно закрыта! Переходим дальше…
@@ -771,7 +788,7 @@
             </div>
           </div>
 
-          {/* Info Modal */}
+          {/* Info Modal with GIF */}
           <InfoModal exercise={modalExercise} onClose={() => setModalExercise(null)} />
         </div>
       );
