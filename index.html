@@ -30,6 +30,28 @@
     input[type=number] {
       -moz-appearance: textfield;
     }
+
+    /* Keyframe Animations for Exercise Vectors */
+    @keyframes squatAnim {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(35px); }
+    }
+    @keyframes rowAnim {
+      0%, 100% { transform: translateY(20px) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(-15deg); }
+    }
+    @keyframes pressAnim {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-30px); }
+    }
+    @keyframes curlAnim {
+      0%, 100% { transform: rotate(0deg); transform-origin: top left; }
+      50% { transform: rotate(-75deg); transform-origin: top left; }
+    }
+    @keyframes plankAnim {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(0.99); }
+    }
   </style>
 </head>
 <body>
@@ -178,30 +200,30 @@
       return round1(baseNumeric(phase, key) + delta);
     }
 
-    // Exercises metadata with rest times, tips & animation GIFs
+    // Exercises metadata with rest times, tips & fallback GIFs
     const EXERCISES = [
       { key: "squat", name: "Приседания с гантелями", reps: "12–15", type: "big", restSec: 90,
-        gif: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Squat.gif",
+        gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcjNmOHJjcXZlNG83amZpbnJpdGZ0bzRjczRwcm9yNXJ5NG5sNjR5ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xT8qB5s8z9oMvH6uBO/giphy.gif",
         tip: "Держи гантели в опущенных руках или у плеч. Спина прямая, таз отводи назад, приседай до параллели бедра с полом.",
         discSetup: (w) => w === 6 ? "по 1 диске 3 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "row", name: "Тяга гантели в наклоне", reps: "10–12", type: "big", restSec: 90,
-        gif: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Row.gif",
+        gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeDR5ZHhpdnJvM2k3NW02cjB0ZWdnbzF2aGxmbnFxbWNpaWZqNHo4ZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKRlo32y9m7y29a/giphy.gif",
         tip: "Опрись коленом и рукой на диван/стул. Корпус параллелен полу. Тяни гантель к поясу, ощущая сжатие лопатки.",
         discSetup: (w) => w === 5 ? "по 1 диске 2.5 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "floor", name: "Жим гантелей лёжа на полу", reps: "10–12", type: "big", restSec: 90,
-        gif: "https://fitnessprogramer.com/wp-content/uploads/2021/06/Dumbbell-Floor-Press.gif",
+        gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1MHBvd2ZldzMxaGVnYnJyOHRnMDRsYzFmdWFydDRrbnp2czljZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlC9Dky9xW01g7S/giphy.gif",
         tip: "Лёжа на спине на коврике, ноги согнуты. Локти под углом 45° к корпусу, выжимай гантели вверх над грудью.",
         discSetup: (w) => w === 5 ? "по 1 диске 2.5 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "ohp", name: "Жим гантелей стоя над головой", reps: "10–12", type: "big", restSec: 75,
-        gif: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Shoulder-Press.gif",
+        gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMnRxeTFndnVpdGxsZjgwZWNxdmV5dWh4YnMwZmdxNGEycXBqdDB0ZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xT8qBi0nI2Z8Fj0r4k/giphy.gif",
         tip: "Стоя, пресс и ягодицы напряжены. Выжимай гантели вверх от плеч над головой, не прогибая поясницу.",
         discSetup: (w) => w === 2.5 ? "по 1 диске 1.25 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "curl", name: "Сгибания на бицепс", reps: "12–15", type: "iso", restSec: 60,
-        gif: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Bicep-Curl.gif",
+        gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcHRmbTF3MHF0ZHA4ZjB3MWF4MXRhczM4dnd2ZXFuaHBxNHdwbzZqZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xT8qB7S950C2V0p35m/giphy.gif",
         tip: "Стоя, локти зафиксированы у туловища. Поднимай гантели плавным движением, разворачивая кисти к себе.",
         discSetup: (w) => w === 2.5 ? "по 1 диске 1.25 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "tricep", name: "Разгибание на трицепс из-за головы", reps: "12–15", type: "iso", restSec: 60,
-        gif: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Triceps-Extension.gif",
+        gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExc25oNG5jcDZvdWphMWIwa2R0cTNpdW16NWFybHRuZXdzZmU0OXJpdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlTYh4Z4zY3Fk08/giphy.gif",
         tip: "Возьми 1 гантель ОБЕИМИ руками за блин, подняв над головой. Опускай за голову и полностью разгибай вверх.",
         discSetup: (w) => w === 2.5 ? "1 гантель с 2 дисками по 1.25 кг (всего 2.5 кг)" : `1 гантель весом ${w} кг` },
     ];
@@ -219,7 +241,7 @@
         weight: effectiveWeight(ex.key, week, overrides),
         sets: ex.type === "big" ? phase.sets.big : phase.sets.iso,
       }));
-      list.push({ key: "plank", name: "Планка", reps: `${phase.plankSec} сек`, restSec: 60, tip: "Планка на предплечьях. Корпус прямой как натянутая струна, пресс сжат.", gif: "https://fitnessprogramer.com/wp-content/uploads/2021/02/Plank.gif", weight: null, sets: 3, isTime: true });
+      list.push({ key: "plank", name: "Планка", reps: `${phase.plankSec} сек`, restSec: 60, tip: "Планка на предплечьях. Корпус прямой как натянутая струна, пресс сжат.", gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXQ0bXdrN3F3bjJhcTFsMnFucmVsZXdwZHc5cm8xdHl6dXZvaGpwZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlRnAWXxn0MhKLK/giphy.gif", weight: null, sets: 3, isTime: true });
       return list;
     }
 
@@ -262,9 +284,68 @@
       done: "#4C9A6B", text: "#F2EDE7", textMuted: "#A79D92", textFaint: "#6E655B",
     };
 
-    // Modal Info Popup with Animated GIF
+    // Vector Exercise Diagram Fallback Component
+    function AnimatedExerciseDiagram({ exerciseKey }) {
+      return (
+        <div style={{ width: "100%", height: 180, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#181311", borderRadius: 12, border: `1px solid ${C.border}` }}>
+          <svg viewBox="0 0 100 100" width="90" height="90">
+            {/* Head */}
+            <circle cx="50" cy="25" r="8" fill={C.accent} />
+            
+            {/* Body */}
+            {exerciseKey === "squat" && (
+              <g style={{ animation: "squatAnim 2s infinite ease-in-out" }}>
+                <line x1="50" y1="33" x2="50" y2="60" stroke={C.text} strokeWidth="4" strokeLinecap="round" />
+                <line x1="50" y1="60" x2="38" y2="82" stroke={C.text} strokeWidth="4" strokeLinecap="round" />
+                <line x1="50" y1="60" x2="62" y2="82" stroke={C.text} strokeWidth="4" strokeLinecap="round" />
+                <circle cx="30" cy="45" r="5" fill="#E67E22" />
+                <circle cx="70" cy="45" r="5" fill="#E67E22" />
+              </g>
+            )}
+
+            {exerciseKey === "row" && (
+              <g style={{ animation: "rowAnim 2s infinite ease-in-out" }}>
+                <line x1="50" y1="33" x2="70" y2="55" stroke={C.text} strokeWidth="4" strokeLinecap="round" />
+                <line x1="50" y1="33" x2="30" y2="55" stroke={C.text} strokeWidth="4" strokeLinecap="round" />
+                <circle cx="70" cy="55" r="5" fill="#E67E22" />
+              </g>
+            )}
+
+            {(exerciseKey === "floor" || exerciseKey === "ohp") && (
+              <g style={{ animation: "pressAnim 1.8s infinite ease-in-out" }}>
+                <line x1="50" y1="33" x2="50" y2="65" stroke={C.text} strokeWidth="4" strokeLinecap="round" />
+                <circle cx="32" cy="30" r="5" fill="#E67E22" />
+                <circle cx="68" cy="30" r="5" fill="#E67E22" />
+              </g>
+            )}
+
+            {(exerciseKey === "curl" || exerciseKey === "tricep") && (
+              <g>
+                <line x1="50" y1="33" x2="50" y2="65" stroke={C.text} strokeWidth="4" strokeLinecap="round" />
+                <g style={{ animation: "curlAnim 1.8s infinite ease-in-out" }}>
+                  <line x1="50" y1="42" x2="68" y2="42" stroke={C.accent} strokeWidth="4" strokeLinecap="round" />
+                  <circle cx="70" cy="42" r="5" fill="#E67E22" />
+                </g>
+              </g>
+            )}
+
+            {exerciseKey === "plank" && (
+              <g style={{ animation: "plankAnim 1.5s infinite ease-in-out" }}>
+                <line x1="25" y1="50" x2="75" y2="50" stroke={C.done} strokeWidth="6" strokeLinecap="round" />
+              </g>
+            )}
+          </svg>
+          <span style={{ fontSize: 11, color: C.textMuted, marginTop: 4 }}>Анимированная схема техники</span>
+        </div>
+      );
+    }
+
+    // Modal Info Popup with Automatic Fallback
     function InfoModal({ exercise, onClose }) {
+      const [imgError, setImgError] = useState(false);
+
       if (!exercise) return null;
+
       return (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
              onClick={onClose}>
@@ -275,12 +356,20 @@
               <button onClick={onClose} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 22, cursor: "pointer", padding: "0 4px" }}>✕</button>
             </div>
 
-            {/* Animation GIF */}
-            {exercise.gif && (
-              <div style={{ width: "100%", height: 210, background: "#110E0C", borderRadius: 12, overflow: "hidden", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.border}` }}>
-                <img src={exercise.gif} alt={exercise.name} loading="lazy" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-              </div>
-            )}
+            {/* Animation GIF or Fallback Vector Diagram */}
+            <div style={{ width: "100%", minHeight: 180, background: "#110E0C", borderRadius: 12, overflow: "hidden", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.border}` }}>
+              {exercise.gif && !imgError ? (
+                <img
+                  src={exercise.gif}
+                  alt={exercise.name}
+                  loading="lazy"
+                  onError={() => setImgError(true)}
+                  style={{ maxWidth: "100%", maxHeight: 210, objectFit: "contain" }}
+                />
+              ) : (
+                <AnimatedExerciseDiagram exerciseKey={exercise.key} />
+              )}
+            </div>
 
             {exercise.discSetup && (
               <div style={{ background: C.surfaceRaised, padding: "10px 12px", borderRadius: 8, marginBottom: 12, fontSize: 13, color: C.text }}>
@@ -407,7 +496,7 @@
         <div style={{ padding: "11px 0", borderBottom: `1px solid ${C.border}` }}>
           {/* Top Line: Name + Info Icon + Reps */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", pr: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
               <span style={{ fontSize: 14.5, color: C.text, fontWeight: 600, lineHeight: 1.3 }}>{ex.name}</span>
               <button onClick={() => onOpenInfo(ex)} style={{ background: "rgba(255,255,255,0.08)", border: `1px solid ${C.border}`, borderRadius: 12, width: 22, height: 22, color: C.textMuted, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 ⓘ
@@ -759,7 +848,7 @@
               <PlateBadge week={week} weeksIntoPhase={weeksIntoPhase} phaseLength={phase.weeks.length} />
               <div style={{ marginTop: 12 }}>
                 <div style={{ fontSize: 12, letterSpacing: "0.14em", color: C.accent, fontWeight: 800, marginBottom: 4 }}>{phase.label.toUpperCase()}</div>
-                <div style={{ fontSize: 12.5, color: C.textMuted }}>Редактируйте веса через значок ✎ (нажмите ⓘ для схемы и GIF-анимации)</div>
+                <div style={{ fontSize: 12.5, color: C.textMuted }}>Редактируйте веса через значок ✎ (нажмите ⓘ для анимации техники)</div>
                 {justAdvanced && (
                   <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(76,154,107,0.2)", border: `1px solid ${C.done}`, borderRadius: 8, fontSize: 13.5, color: C.done, fontWeight: 700 }}>
                     🎉 Неделя {week} успешно закрыта! Переходим дальше…
@@ -788,7 +877,7 @@
             </div>
           </div>
 
-          {/* Info Modal with GIF */}
+          {/* Info Modal with Automatic Fallback */}
           <InfoModal exercise={modalExercise} onClose={() => setModalExercise(null)} />
         </div>
       );
