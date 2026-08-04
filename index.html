@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>NeuroFit Трекер</title>
+  
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- React & Babel Standalone -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #15120F;
+      color: #F2EDE7;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    // Expand Telegram WebApp view
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+    }
+
+    // --- IndexedDB for Private Photo Storage ---
+    const DB_NAME = "NeuroFitPhotosDB";
+    function openPhotoDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains("photos")) {
+            db.createObjectStore("photos", { keyPath: "week" });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function savePhotoLocal(week, dataUrl) {
+      try {
+        const db = await openPhotoDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction("photos", "readwrite");
+          const store = tx.objectStore("photos");
+          store.put({ week, dataUrl });
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => reject(false);
+        });
+      } catch (e) { return false; }
+    }
+
+    async function getPhotoLocal(week) {
+      try {
+        const db = await openPhotoDB();
+        return new Promise((resolve) => {
+          const tx = db.transaction("photos", "readonly");
+          const store = tx.objectStore("photos");
+          const req = store.get(week);
+          req.onsuccess = () => resolve(req.result ? req.result.dataUrl : null);
+          req.onerror = () => resolve(null);
+        });
+      } catch (e) { return null; }
+    }
+
+    // --- Telegram CloudStorage & LocalStorage helper ---
+    const STATE_KEY = "neurofit_state_v1";
+    function loadStateStorage() {
+      return new Promise((resolve) => {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
+          window.Telegram.WebApp.CloudStorage.getItem(STATE_KEY, (err, val) => {
+            if (!err && val) {
+              try { return resolve(JSON.parse(val)); } catch (e) {}
+            }
+            fallbackLocal();
+          });
+        } else {
+          fallbackLocal();
+        }
+        function fallbackLocal() {
+          try {
+            const val = localStorage.getItem(STATE_KEY);
+            if (val) return resolve(JSON.parse(val));
+          } catch (e) {}
+          resolve(null);
+        }
+      });
+    }
+
+    function saveStateStorage(state) {
+      const str = JSON.stringify(state);
+      try { localStorage.setItem(STATE_KEY, str); } catch (e) {}
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.CloudStorage) {
+        window.Telegram.WebApp.CloudStorage.setItem(STATE_KEY, str);
+      }
+    }
+
+    const MAX_DB = 20;
+
+    const BASE_PHASES = [
+      { id: 1, label: "Адаптация", weeks: [1, 2], sets: { big: 2, iso: 2 },
+        weights: { squat: 6, row: 5, floor: 5, ohp: 2.5, curl: 2.5, tricep: 0 }, plankSec: 25 },
+      { id: 2, label: "Полный объём", weeks: [3, 4, 5], sets: { big: 3, iso: 2 },
+        weights: { squat: 6, row: 5, floor: 5, ohp: 2.5, curl: 2.5, tricep: 0 }, plankSec: 30 },
+      { id: 3, label: "Первое повышение веса", weeks: [6, 7, 8], sets: { big: 3, iso: 2 },
+        weights: { squat: 8.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 2.5 }, plankSec: 40 },
+      { id: 4, label: "Продолжаем расти", weeks: [9, 10, 11], sets: { big: 3, iso: 2 },
+        weights: { squat: 11, row: 8.5, floor: 8.5, ohp: 6, curl: 6, tricep: 5 }, plankSec: 50 },
+      { id: 5, label: "Фаза 5", weeks: [12, 13, 14], sets: { big: 3, iso: 2 },
+        weights: { squat: 12, row: 11, floor: 11, ohp: 7.5, curl: 7.5, tricep: 6 }, plankSec: 60 },
+    ];
+
+    function capNum(v) { return typeof v === "number" ? Math.min(v, MAX_DB) : v; }
+    function round1(v) { return Math.round(v * 10) / 10; }
+
+    function getPhaseForWeek(week) {
+      const found = BASE_PHASES.find((ph) => week >= ph.weeks[0] && week <= ph.weeks[ph.weeks.length - 1]);
+      if (found) return found;
+      const last = BASE_PHASES[BASE_PHASES.length - 1];
+      const afterLastWeek = last.weeks[last.weeks.length - 1];
+      const blockSize = 3;
+      const weeksAfter = week - afterLastWeek;
+      const blockIndex = Math.ceil(weeksAfter / blockSize);
+      const blockStart = afterLastWeek + (blockIndex - 1) * blockSize + 1;
+      return {
+        id: 5 + blockIndex,
+        label: `Фаза ${5 + blockIndex}`,
+        weeks: Array.from({ length: blockSize }, (_, i) => blockStart + i),
+        sets: last.sets,
+        weights: {
+          squat: capNum(last.weights.squat + 2 * blockIndex),
+          row: capNum(last.weights.row + 2 * blockIndex),
+          floor: capNum(last.weights.floor + 2 * blockIndex),
+          ohp: capNum(last.weights.ohp + 2 * blockIndex),
+          curl: capNum(last.weights.curl + 1 * blockIndex),
+          tricep: capNum(last.weights.tricep + 1 * blockIndex),
+        },
+        plankSec: last.plankSec + 10 * blockIndex,
+      };
+    }
+
+    function baseNumeric(phase, key) {
+      const v = phase.weights[key];
+      return typeof v === "number" ? v : 0;
+    }
+
+    function effectiveWeight(key, week, overrides) {
+      const phase = getPhaseForWeek(week);
+      const list = overrides[key] || {};
+      const weeks = Object.keys(list).map(Number).filter((w) => w <= week);
+      if (weeks.length === 0) return phase.weights[key];
+      const overrideWeek = Math.max(...weeks);
+      const overrideVal = list[overrideWeek];
+      const delta = overrideVal - baseNumeric(getPhaseForWeek(overrideWeek), key);
+      return round1(baseNumeric(phase, key) + delta);
+    }
+
+    const EXERCISES = [
+      { key: "squat", name: "Приседания с гантелями", reps: "12–15", type: "big" },
+      { key: "row", name: "Тяга гантели в наклоне", reps: "10–12", type: "big" },
+      { key: "floor", name: "Жим гантелей лёжа на полу", reps: "10–12", type: "big" },
+      { key: "ohp", name: "Жим гантелей стоя над головой", reps: "10–12", type: "big" },
+      { key: "curl", name: "Сгибания на бицепс", reps: "12–15", type: "iso" },
+      { key: "tricep", name: "Разгибание на трицепс из-за головы", reps: "12–15", type: "iso" },
+    ];
+    const DAYS = [
+      { key: "mon", label: "День 1" },
+      { key: "wed", label: "День 2" },
+      { key: "fri", label: "День 3" },
+    ];
+
+    function workoutFor(phase, week, overrides) {
+      const list = EXERCISES.map((ex) => ({
+        key: ex.key, name: ex.name, reps: ex.reps,
+        weight: effectiveWeight(ex.key, week, overrides),
+        sets: ex.type === "big" ? phase.sets.big : phase.sets.iso,
+      }));
+      list.push({ key: "plank", name: "Планка", reps: `${phase.plankSec} сек`, weight: null, sets: 3, isTime: true });
+      return list;
+    }
+
+    function isPhotoWeek(week) { return week % 2 === 1; }
+
+    function emptyChecksForWeek(phase, week, overrides) {
+      const wk = workoutFor(phase, week, overrides);
+      const perDay = {};
+      wk.forEach((ex) => { perDay[ex.key] = Array.from({ length: ex.sets }, () => false); });
+      const obj = {};
+      DAYS.forEach((d) => { obj[d.key] = JSON.parse(JSON.stringify(perDay)); });
+      return obj;
+    }
+
+    function compressImage(file, maxDim = 800, quality = 0.72) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            let { width, height } = img;
+            if (width > height && width > maxDim) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+            else if (height > maxDim) { width = Math.round(width * (maxDim / height)); height = maxDim; }
+            const canvas = document.createElement("canvas");
+            canvas.width = width; canvas.height = height;
+            canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          };
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    const C = {
+      bg: "#15120F", surface: "#1D1815", surfaceRaised: "#241E19", border: "#332B24",
+      accent: "#C0392B", accentDim: "#5A241D", accentSoft: "#3A2621",
+      done: "#4C9A6B", text: "#F2EDE7", textMuted: "#A79D92", textFaint: "#6E655B",
+    };
+
+    function PlateBadge({ week, weeksIntoPhase, phaseLength }) {
+      const r = 92;
+      return (
+        <div style={{ position: "relative", width: 150, height: 150, flexShrink: 0, margin: "0 auto" }}>
+          <svg viewBox="0 0 200 200" width="150" height="150">
+            <circle cx="100" cy="100" r={r} fill={C.accentDim} stroke={C.accent} strokeWidth="3" />
+            <circle cx="100" cy="100" r={r - 14} fill="none" stroke={C.accent} strokeWidth="1.5" opacity="0.5" />
+            <circle cx="100" cy="100" r={r - 28} fill="none" stroke={C.accent} strokeWidth="1.5" opacity="0.35" />
+            <circle cx="100" cy="100" r="34" fill={C.bg} stroke={C.accent} strokeWidth="2" />
+          </svg>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: C.text }}>
+            <span style={{ fontSize: 10, letterSpacing: "0.18em", color: C.textMuted, fontWeight: 700, marginBottom: -2 }}>НЕДЕЛЯ</span>
+            <span style={{ fontSize: 34, fontWeight: 900, lineHeight: 1 }}>{week}</span>
+          </div>
+          <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 5 }}>
+            {Array.from({ length: phaseLength }, (_, i) => (
+              <span key={i} style={{ width: 8, height: 8, borderRadius: 9999, background: i < weeksIntoPhase ? C.accent : "transparent", border: `1.5px solid ${C.accent}` }} />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function CheckBox({ checked, onClick, size = 24 }) {
+      return (
+        <button onClick={onClick} aria-pressed={checked} style={{
+          width: size, height: size, borderRadius: 6, flexShrink: 0, cursor: "pointer",
+          border: `2px solid ${checked ? C.done : C.textMuted}`, background: checked ? C.done : "transparent",
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+        }}>
+          {checked && <svg width={size * 0.6} height={size * 0.6} viewBox="0 0 20 20" fill="none">
+            <path d="M4 10.5L8 14.5L16 5.5" stroke={C.bg} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+        </button>
+      );
+    }
+
+    function EditableWeight({ value, isTime, onSave }) {
+      const [editing, setEditing] = useState(false);
+      const [draft, setDraft] = useState("");
+      if (isTime || value == null) {
+        return <span style={{ fontSize: 12.5, color: C.textMuted, fontFamily: "ui-monospace, monospace" }}>без веса</span>;
+      }
+      if (editing) {
+        return (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <input
+              autoFocus type="number" step="0.5" inputMode="decimal" value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={commit} onKeyDown={(e) => { if (e.key === "Enter") commit(); if (e.key === "Escape") setEditing(false); }}
+              style={{ width: 56, fontSize: 13, padding: "2px 5px", borderRadius: 5, border: `1px solid ${C.accent}`, background: C.bg, color: C.text }}
+            />
+            <span style={{ fontSize: 12, color: C.textMuted }}>кг</span>
+          </span>
+        );
+      }
+      function commit() {
+        const n = parseFloat(draft);
+        if (!isNaN(n) && n >= 0) onSave(round1(n));
+        setEditing(false);
+      }
+      const display = typeof value === "number" ? (value === 0 ? "0 кг (без дисков)" : `${value} кг`) : value;
+      return (
+        <button onClick={() => { setDraft(typeof value === "number" ? String(value) : "0"); setEditing(true); }}
+          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 12.5, color: C.textMuted, fontFamily: "ui-monospace, monospace", textDecoration: "underline dotted", textUnderlineOffset: 3 }}>
+          {display} ✎
+        </button>
+      );
+    }
+
+    function ExerciseRow({ ex, checks, onToggleSet, onWeightChange }) {
+      return (
+        <div style={{ padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6, gap: 8 }}>
+            <span style={{ fontSize: 14.5, color: C.text, fontWeight: 600 }}>{ex.name}</span>
+            <span style={{ display: "flex", alignItems: "baseline", gap: 6, whiteSpace: "nowrap" }}>
+              <EditableWeight value={ex.weight} isTime={ex.isTime} onSave={(v) => onWeightChange(ex.key, v)} />
+              <span style={{ fontSize: 12.5, color: C.textFaint }}>· {ex.reps}</span>
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            {checks.map((c, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <CheckBox checked={c} onClick={() => onToggleSet(ex.key, i)} size={22} />
+                <span style={{ fontSize: 11, color: C.textFaint }}>{i + 1}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function PhotoSlot({ week, photoDataUrl, onPick, busy }) {
+      const inputRef = useRef(null);
+
+      return (
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {photoDataUrl ? (
+            <img src={photoDataUrl} alt={`Неделя ${week}`} style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 8, border: `1px solid ${C.border}` }} />
+          ) : (
+            <div style={{ width: 44, height: 44, borderRadius: 8, border: `1px dashed ${C.textFaint}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📷</div>
+          )}
+          <button onClick={() => inputRef.current && inputRef.current.click()} disabled={busy}
+            style={{ background: "none", border: "none", color: C.accent, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: 0 }}>
+            {busy ? "Сохраняю..." : photoDataUrl ? "Заменить фото" : "📸 Добавить фото прогресса"}
+          </button>
+          <input ref={inputRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }}
+            onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) onPick(f); e.target.value = ""; }} />
+        </div>
+      );
+    }
+
+    function DayCard({ day, phase, week, checksForDay, onToggleSet, onToggleAll, onWeightChange,
+                        bodyWeight, onBodyWeightChange, currentPhotoUrl, onPhotoPick, photoBusy }) {
+      const list = workoutFor(phase, week, {});
+      const allDone = list.every((ex) => checksForDay && checksForDay[ex.key] && checksForDay[ex.key].every(Boolean));
+      const showPhoto = day.key === "mon" && isPhotoWeek(week);
+
+      return (
+        <div style={{ background: C.surface, border: `1px solid ${allDone ? C.done : C.border}`, borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, cursor: "pointer" }}
+               onClick={() => onToggleAll(day.key, !allDone)}>
+            <span style={{ fontSize: 18, fontWeight: 800, color: C.text }}>{day.label}</span>
+            <CheckBox checked={allDone} onClick={(e) => { e.stopPropagation(); onToggleAll(day.key, !allDone); }} size={28} />
+          </div>
+
+          {day.key === "mon" && (
+            <div style={{ background: C.surfaceRaised, borderRadius: 10, padding: "10px 12px", marginBottom: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 14 }}>⚖</span>
+                <span style={{ fontSize: 13, color: C.textMuted }}>Вес тела:</span>
+                <input type="number" step="0.1" inputMode="decimal" placeholder="—"
+                  value={bodyWeight ?? ""} onChange={(e) => onBodyWeightChange(e.target.value === "" ? null : parseFloat(e.target.value))}
+                  style={{ width: 62, fontSize: 13, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text }} />
+                <span style={{ fontSize: 12, color: C.textFaint }}>кг</span>
+              </div>
+              {showPhoto && <PhotoSlot week={week} photoDataUrl={currentPhotoUrl} onPick={onPhotoPick} busy={photoBusy} />}
+            </div>
+          )}
+
+          <div>
+            {list.map((ex) => (
+              <ExerciseRow key={ex.key} ex={ex} checks={checksForDay ? checksForDay[ex.key] || [] : []} onToggleSet={(k, i) => onToggleSet(day.key, k, i)} onWeightChange={onWeightChange} />
+            ))}
+          </div>
+
+          <div style={{ marginTop: 12, fontSize: 12, color: C.textMuted, lineHeight: 1.4 }}>
+            🥤 После тренировки: <span style={{ color: C.accent, fontWeight: 700 }}>протеин + креатин (3–5 г)</span>
+          </div>
+        </div>
+      );
+    }
+
+    function ProgressPanel({ week, overrides, bodyWeightLog, photoWeeks, getPhotoLocal }) {
+      const [open, setOpen] = useState(false);
+      const [p1, setP1] = useState(null);
+      const [p2, setP2] = useState(null);
+
+      const bwWeeks = Object.keys(bodyWeightLog).map(Number).sort((a, b) => a - b);
+      const bwFirst = bwWeeks.length ? bodyWeightLog[bwWeeks[0]] : null;
+      const bwLast = bwWeeks.length ? bodyWeightLog[bwWeeks[bwWeeks.length - 1]] : null;
+
+      const firstPhotoWeek = photoWeeks.length ? photoWeeks[0] : null;
+      const lastPhotoWeek = photoWeeks.length ? photoWeeks[photoWeeks.length - 1] : null;
+
+      useEffect(() => {
+        if (open) {
+          if (firstPhotoWeek) getPhotoLocal(firstPhotoWeek).then(setP1);
+          if (lastPhotoWeek) getPhotoLocal(lastPhotoWeek).then(setP2);
+        }
+      }, [open, firstPhotoWeek, lastPhotoWeek]);
+
+      return (
+        <div style={{ marginTop: 18, marginBottom: 18, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 18px" }}>
+          <button onClick={() => setOpen((v) => !v)} style={{ background: "none", border: "none", color: C.text, fontSize: 15, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, padding: 0, width: "100%", justifyContent: "space-between" }}>
+            <span>📊 Прогресс: было → стало</span>
+            <span style={{ color: C.textMuted, fontSize: 12 }}>{open ? "свернуть" : "показать"}</span>
+          </button>
+          {open && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, fontSize: 13.5 }}>
+                <span style={{ color: C.textMuted }}>Вес тела:</span>
+                {bwFirst != null ? (
+                  <span style={{ color: C.text, fontWeight: 700 }}>
+                    {bwFirst} кг → {bwLast} кг
+                    <span style={{ color: bwLast - bwFirst >= 0 ? C.done : C.accent, marginLeft: 6 }}>
+                      ({bwLast - bwFirst >= 0 ? "+" : ""}{round1(bwLast - bwFirst)})
+                    </span>
+                  </span>
+                ) : <span style={{ color: C.textFaint }}>ещё нет данных — впишите вес на 1-м дне</span>}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+                {EXERCISES.map((ex) => {
+                  const w1 = effectiveWeight(ex.key, 1, overrides);
+                  const wNow = effectiveWeight(ex.key, week, overrides);
+                  const n1 = typeof w1 === "number" ? w1 : 0;
+                  const nNow = typeof wNow === "number" ? wNow : 0;
+                  return (
+                    <div key={ex.key} style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                      <span style={{ color: C.textMuted }}>{ex.name}</span>
+                      <span style={{ color: C.text, fontFamily: "ui-monospace, monospace" }}>
+                        {typeof w1 === "number" ? `${w1} кг` : w1} → {typeof wNow === "number" ? `${wNow} кг` : wNow}
+                        {nNow - n1 !== 0 && <span style={{ color: C.done, marginLeft: 6 }}>(+{round1(nNow - n1)})</span>}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div>
+                <div style={{ fontSize: 12.5, color: C.textMuted, marginBottom: 8 }}>Фото: неделя {firstPhotoWeek || "—"} → неделя {lastPhotoWeek || "—"}</div>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <div style={{ width: 120, height: 150, borderRadius: 10, overflow: "hidden", border: `1px solid ${C.border}`, background: C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {p1 ? <img src={p1} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 11, color: C.textFaint, padding: 8, textAlign: "center" }}>нет фото</span>}
+                  </div>
+                  <div style={{ width: 120, height: 150, borderRadius: 10, overflow: "hidden", border: `1px solid ${C.border}`, background: C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {p2 ? <img src={p2} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 11, color: C.textFaint, padding: 8, textAlign: "center" }}>нет фото</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function Roadmap({ currentWeek, overrides }) {
+      const [open, setOpen] = useState(false);
+      const rows = [];
+      for (let w = 1; w <= 20; w++) {
+        const ph = getPhaseForWeek(w);
+        if (rows.length === 0 || rows[rows.length - 1].id !== ph.id) rows.push({ id: ph.id, label: ph.label, weeks: ph.weeks, phase: ph });
+      }
+      return (
+        <div style={{ marginTop: 16 }}>
+          <button onClick={() => setOpen((v) => !v)} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
+            <span style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform 150ms", display: "inline-block" }}>›</span>
+            Показать весь план тренировок
+          </button>
+          {open && (
+            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+              {rows.map((r) => {
+                const active = currentWeek >= r.weeks[0] && currentWeek <= r.weeks[r.weeks.length - 1];
+                const midWeek = r.weeks[0];
+                const floorW = effectiveWeight("floor", midWeek, overrides);
+                const squatW = effectiveWeight("squat", midWeek, overrides);
+                return (
+                  <div key={r.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, padding: "7px 10px", borderRadius: 8, background: active ? C.accentSoft : "transparent", color: active ? C.text : C.textMuted }}>
+                    <span>Недели {r.weeks[0]}–{r.weeks[r.weeks.length - 1]} · {r.label}</span>
+                    <span style={{ fontFamily: "ui-monospace, monospace" }}>присед {squatW}кг · жим {floorW}кг · планка {r.phase.plankSec}с</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function App() {
+      const [week, setWeek] = useState(1);
+      const [overrides, setOverrides] = useState({});
+      const [checks, setChecks] = useState({});
+      const [bodyWeightLog, setBodyWeightLog] = useState({});
+      const [photoWeeks, setPhotoWeeks] = useState([]);
+      const [currentPhotoUrl, setCurrentPhotoUrl] = useState(null);
+      const [photoBusy, setPhotoBusy] = useState(false);
+      const [loaded, setLoaded] = useState(false);
+      const [justAdvanced, setJustAdvanced] = useState(false);
+      const advancingRef = useRef(false);
+
+      useEffect(() => {
+        (async () => {
+          const saved = await loadStateStorage();
+          if (saved) {
+            setWeek(saved.week || 1);
+            setOverrides(saved.overrides || {});
+            setChecks(saved.checks && Object.keys(saved.checks).length ? saved.checks : emptyChecksForWeek(getPhaseForWeek(saved.week || 1), saved.week || 1, saved.overrides || {}));
+            setBodyWeightLog(saved.bodyWeightLog || {});
+            setPhotoWeeks(saved.photoWeeks || []);
+          } else {
+            setChecks(emptyChecksForWeek(getPhaseForWeek(1), 1, {}));
+          }
+          setLoaded(true);
+        })();
+      }, []);
+
+      useEffect(() => {
+        if (!loaded) return;
+        saveStateStorage({ week, overrides, checks, bodyWeightLog, photoWeeks });
+      }, [week, overrides, checks, bodyWeightLog, photoWeeks, loaded]);
+
+      useEffect(() => {
+        if (loaded) {
+          getPhotoLocal(week).then(setCurrentPhotoUrl);
+        }
+      }, [week, loaded]);
+
+      const phase = getPhaseForWeek(week);
+      const weeksIntoPhase = week - phase.weeks[0] + 1;
+
+      const allDaysDone = DAYS.every((d) => {
+        const list = workoutFor(phase, week, overrides);
+        return checks[d.key] && list.every((ex) => checks[d.key][ex.key] && checks[d.key][ex.key].every(Boolean));
+      });
+
+      useEffect(() => {
+        if (allDaysDone && !advancingRef.current && loaded) {
+          advancingRef.current = true;
+          setJustAdvanced(true);
+          const t = setTimeout(() => {
+            const nextWeek = week + 1;
+            setWeek(nextWeek);
+            setChecks(emptyChecksForWeek(getPhaseForWeek(nextWeek), nextWeek, overrides));
+            advancingRef.current = false;
+            setJustAdvanced(false);
+          }, 900);
+          return () => clearTimeout(t);
+        }
+      }, [allDaysDone, loaded]);
+
+      const toggleSet = useCallback((dayKey, exKey, idx) => {
+        setChecks((prev) => {
+          const next = JSON.parse(JSON.stringify(prev));
+          if (!next[dayKey]) next[dayKey] = {};
+          if (!next[dayKey][exKey]) next[dayKey][exKey] = [];
+          next[dayKey][exKey][idx] = !next[dayKey][exKey][idx];
+          return next;
+        });
+      }, []);
+
+      const toggleAll = useCallback((dayKey, value) => {
+        setChecks((prev) => {
+          const next = JSON.parse(JSON.stringify(prev));
+          if (!next[dayKey]) return prev;
+          Object.keys(next[dayKey]).forEach((k) => { next[dayKey][k] = next[dayKey][k].map(() => value); });
+          return next;
+        });
+      }, []);
+
+      const changeWeight = useCallback((exKey, value) => {
+        setOverrides((prev) => ({ ...prev, [exKey]: { ...(prev[exKey] || {}), [week]: value } }));
+      }, [week]);
+
+      const changeBodyWeight = useCallback((val) => {
+        setBodyWeightLog((prev) => { const next = { ...prev }; if (val == null) delete next[week]; else next[week] = val; return next; });
+      }, [week]);
+
+      const pickPhoto = useCallback(async (file) => {
+        setPhotoBusy(true);
+        try {
+          const dataUrl = await compressImage(file);
+          await savePhotoLocal(week, dataUrl);
+          setCurrentPhotoUrl(dataUrl);
+          setPhotoWeeks((prev) => (prev.includes(week) ? prev : [...prev, week].sort((a, b) => a - b)));
+        } finally { setPhotoBusy(false); }
+      }, [week]);
+
+      const resetWeek = () => setChecks(emptyChecksForWeek(phase, week, overrides));
+      
+      const resetAll = () => {
+        if (!window.confirm("Сбросить весь прогресс и начать с недели 1?")) return;
+        setWeek(1); setOverrides({}); setChecks(emptyChecksForWeek(getPhaseForWeek(1), 1, {})); setBodyWeightLog({}); setPhotoWeeks([]); setCurrentPhotoUrl(null);
+      };
+
+      const nudgeWeek = (delta) => {
+        const w = Math.max(1, week + delta);
+        setWeek(w); setChecks(emptyChecksForWeek(getPhaseForWeek(w), w, overrides));
+      };
+
+      if (!loaded) return <div style={{ background: C.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: C.textMuted, fontSize: 16 }}>Загрузка трекера…</div>;
+
+      return (
+        <div style={{ background: C.bg, minHeight: "100vh", color: C.text, padding: "20px 14px 50px" }}>
+          <div style={{ maxWidth: 600, margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <PlateBadge week={week} weeksIntoPhase={weeksIntoPhase} phaseLength={phase.weeks.length} />
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 12, letterSpacing: "0.14em", color: C.accent, fontWeight: 800, marginBottom: 4 }}>{phase.label.toUpperCase()}</div>
+                <div style={{ fontSize: 12.5, color: C.textMuted }}>Редактируйте веса через значок ✎ (автопересчет на следующие недели)</div>
+                {justAdvanced && <div style={{ marginTop: 8, fontSize: 13, color: C.done, fontWeight: 700 }}>✓ Неделя закрыта — переходим далее…</div>}
+              </div>
+            </div>
+
+            <ProgressPanel week={week} overrides={overrides} bodyWeightLog={bodyWeightLog} photoWeeks={photoWeeks} getPhotoLocal={getPhotoLocal} />
+
+            {DAYS.map((d) => (
+              <DayCard key={d.key} day={d} phase={phase} week={week} checksForDay={checks[d.key]}
+                onToggleSet={toggleSet} onToggleAll={toggleAll} onWeightChange={changeWeight}
+                bodyWeight={bodyWeightLog[week] ?? null} onBodyWeightChange={changeBodyWeight}
+                currentPhotoUrl={currentPhotoUrl} onPhotoPick={pickPhoto} photoBusy={photoBusy} />
+            ))}
+
+            <Roadmap currentWeek={week} overrides={overrides} />
+
+            <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${C.border}`, display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
+              <button onClick={resetWeek} style={ghostBtn}>Сбросить эту неделю</button>
+              <button onClick={() => nudgeWeek(-1)} style={ghostBtn}>← Пред. неделя</button>
+              <button onClick={() => nudgeWeek(1)} style={ghostBtn}>След. неделя →</button>
+              <button onClick={resetAll} style={{ ...ghostBtn, color: C.accent }}>Начать заново</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const ghostBtn = { background: "none", border: "none", color: "#A79D92", fontSize: 12.5, cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 3 };
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
