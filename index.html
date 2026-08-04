@@ -200,30 +200,30 @@
       return round1(baseNumeric(phase, key) + delta);
     }
 
-    // Exercises metadata with rest times, tips & fallback GIFs
+    // Exercises metadata with local GIF paths
     const EXERCISES = [
       { key: "squat", name: "Приседания с гантелями", reps: "12–15", type: "big", restSec: 90,
-        gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcjNmOHJjcXZlNG83amZpbnJpdGZ0bzRjczRwcm9yNXJ5NG5sNjR5ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xT8qB5s8z9oMvH6uBO/giphy.gif",
+        gif: "./gifs/squat.gif",
         tip: "Держи гантели в опущенных руках или у плеч. Спина прямая, таз отводи назад, приседай до параллели бедра с полом.",
         discSetup: (w) => w === 6 ? "по 1 диске 3 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "row", name: "Тяга гантели в наклоне", reps: "10–12", type: "big", restSec: 90,
-        gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeDR5ZHhpdnJvM2k3NW02cjB0ZWdnbzF2aGxmbnFxbWNpaWZqNHo4ZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKRlo32y9m7y29a/giphy.gif",
+        gif: "./gifs/row.gif",
         tip: "Опрись коленом и рукой на диван/стул. Корпус параллелен полу. Тяни гантель к поясу, ощущая сжатие лопатки.",
         discSetup: (w) => w === 5 ? "по 1 диске 2.5 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "floor", name: "Жим гантелей лёжа на полу", reps: "10–12", type: "big", restSec: 90,
-        gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1MHBvd2ZldzMxaGVnYnJyOHRnMDRsYzFmdWFydDRrbnp2czljZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlC9Dky9xW01g7S/giphy.gif",
+        gif: "./gifs/floor.gif",
         tip: "Лёжа на спине на коврике, ноги согнуты. Локти под углом 45° к корпусу, выжимай гантели вверх над грудью.",
         discSetup: (w) => w === 5 ? "по 1 диске 2.5 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "ohp", name: "Жим гантелей стоя над головой", reps: "10–12", type: "big", restSec: 75,
-        gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMnRxeTFndnVpdGxsZjgwZWNxdmV5dWh4YnMwZmdxNGEycXBqdDB0ZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xT8qBi0nI2Z8Fj0r4k/giphy.gif",
+        gif: "./gifs/ohp.gif",
         tip: "Стоя, пресс и ягодицы напряжены. Выжимай гантели вверх от плеч над головой, не прогибая поясницу.",
         discSetup: (w) => w === 2.5 ? "по 1 диске 1.25 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "curl", name: "Сгибания на бицепс", reps: "12–15", type: "iso", restSec: 60,
-        gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcHRmbTF3MHF0ZHA4ZjB3MWF4MXRhczM4dnd2ZXFuaHBxNHdwbzZqZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xT8qB7S950C2V0p35m/giphy.gif",
+        gif: "./gifs/curl.gif",
         tip: "Стоя, локти зафиксированы у туловища. Поднимай гантели плавным движением, разворачивая кисти к себе.",
         discSetup: (w) => w === 2.5 ? "по 1 диске 1.25 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
       { key: "tricep", name: "Разгибание на трицепс из-за головы", reps: "12–15", type: "iso", restSec: 60,
-        gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExc25oNG5jcDZvdWphMWIwa2R0cTNpdW16NWFybHRuZXdzZmU0OXJpdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlTYh4Z4zY3Fk08/giphy.gif",
+        gif: "./gifs/tricep.gif",
         tip: "Возьми 1 гантель ОБЕИМИ руками за блин, подняв над головой. Опускай за голову и полностью разгибай вверх.",
         discSetup: (w) => w === 2.5 ? "1 гантель с 2 дисками по 1.25 кг (всего 2.5 кг)" : `1 гантель весом ${w} кг` },
     ];
@@ -241,7 +241,7 @@
         weight: effectiveWeight(ex.key, week, overrides),
         sets: ex.type === "big" ? phase.sets.big : phase.sets.iso,
       }));
-      list.push({ key: "plank", name: "Планка", reps: `${phase.plankSec} сек`, restSec: 60, tip: "Планка на предплечьях. Корпус прямой как натянутая струна, пресс сжат.", gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXQ0bXdrN3F3bjJhcTFsMnFucmVsZXdwZHc5cm8xdHl6dXZvaGpwZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlRnAWXxn0MhKLK/giphy.gif", weight: null, sets: 3, isTime: true });
+      list.push({ key: "plank", name: "Планка", reps: `${phase.plankSec} сек`, restSec: 60, tip: "Планка на предплечьях. Корпус прямой как натянутая струна, пресс сжат.", gif: "./gifs/plank.gif", weight: null, sets: 3, isTime: true });
       return list;
     }
 
@@ -877,7 +877,7 @@
             </div>
           </div>
 
-          {/* Info Modal with Automatic Fallback */}
+          {/* Info Modal with Local GIF & SVG Fallback */}
           <InfoModal exercise={modalExercise} onClose={() => setModalExercise(null)} />
         </div>
       );
