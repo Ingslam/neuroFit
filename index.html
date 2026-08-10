@@ -178,7 +178,7 @@
       return round1(baseNumeric(phase, key) + delta);
     }
 
-    // Exercises metadata with local GIFs
+    // Exercises metadata with local GymVisual 3D Human GIFs
     const EXERCISES = [
       { key: "squat", name: "Приседания с гантелями", reps: "12–15 повторов", type: "big", restSec: 90,
         gif: "./gifs/squat.gif",
@@ -262,7 +262,7 @@
       done: "#4C9A6B", text: "#F2EDE7", textMuted: "#A79D92", textFaint: "#6E655B",
     };
 
-    // Modal Info Popup with GIF
+    // Modal Info Popup with GymVisual 3D GIF
     function InfoModal({ exercise, onClose }) {
       if (!exercise) return null;
 
@@ -282,7 +282,7 @@
                 <img
                   src={exercise.gif}
                   alt={exercise.name}
-                  style={{ maxWidth: "100%", maxHeight: 220, objectFit: "contain" }}
+                  style={{ maxWidth: "100%", maxHeight: 230, objectFit: "contain" }}
                 />
               </div>
             )}
@@ -764,7 +764,7 @@
               <PlateBadge week={week} weeksIntoPhase={weeksIntoPhase} phaseLength={phase.weeks.length} />
               <div style={{ marginTop: 12 }}>
                 <div style={{ fontSize: 12, letterSpacing: "0.14em", color: C.accent, fontWeight: 800, marginBottom: 4 }}>{phase.label.toUpperCase()}</div>
-                <div style={{ fontSize: 12.5, color: C.textMuted }}>Редактируйте веса через значок ✎ (нажмите ⓘ для видео-анимации)</div>
+                <div style={{ fontSize: 12.5, color: C.textMuted }}>Редактируйте веса через значок ✎ (нажмите ⓘ для 3D-анимации GymVisual)</div>
                 {justAdvanced && (
                   <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(76,154,107,0.2)", border: `1px solid ${C.done}`, borderRadius: 8, fontSize: 13.5, color: C.done, fontWeight: 700 }}>
                     🎉 Неделя {week} успешно закрыта! Переходим дальше…
@@ -793,7 +793,7 @@
             </div>
           </div>
 
-          {/* Info Modal with Real GIF */}
+          {/* Info Modal with GymVisual 3D GIF */}
           <InfoModal exercise={modalExercise} onClose={() => setModalExercise(null)} />
         </div>
       );
