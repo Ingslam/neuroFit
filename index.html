@@ -30,6 +30,10 @@
     input[type=number] {
       -moz-appearance: textfield;
     }
+    button, input { font: inherit; }
+    @media (max-width: 360px) {
+      body { font-size: 15px; }
+    }
   </style>
 </head>
 <body>
@@ -118,19 +122,25 @@
       }
     }
 
-    const MAX_DB = 20;
+    const MAX_DB = 12;
 
     const BASE_PHASES = [
-      { id: 1, label: "Адаптация", weeks: [1, 2], sets: { big: 2, iso: 2 },
-        weights: { squat: 6, row: 5, floor: 5, ohp: 2.5, curl: 2.5, tricep: 2.5 }, plankSec: 25 },
+      { id: 1, label: "Старт и техника", weeks: [1, 2], sets: { big: 2, iso: 2 },
+        weights: { squat: 7.5, rdl: 7.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 5 }, plankSec: 25 },
       { id: 2, label: "Полный объём", weeks: [3, 4, 5], sets: { big: 3, iso: 2 },
-        weights: { squat: 6, row: 5, floor: 5, ohp: 2.5, curl: 2.5, tricep: 2.5 }, plankSec: 30 },
-      { id: 3, label: "Первое повышение веса", weeks: [6, 7, 8], sets: { big: 3, iso: 2 },
-        weights: { squat: 8.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 3.5 }, plankSec: 40 },
-      { id: 4, label: "Продолжаем расти", weeks: [9, 10, 11], sets: { big: 3, iso: 2 },
-        weights: { squat: 11, row: 8.5, floor: 8.5, ohp: 6, curl: 6, tricep: 5 }, plankSec: 50 },
-      { id: 5, label: "Фаза 5", weeks: [12, 13, 14], sets: { big: 3, iso: 2 },
-        weights: { squat: 12, row: 11, floor: 11, ohp: 7.5, curl: 7.5, tricep: 6 }, plankSec: 60 },
+        weights: { squat: 7.5, rdl: 7.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 5 }, plankSec: 30 },
+      { id: 3, label: "Первое повышение", weeks: [6, 7, 8], sets: { big: 3, iso: 2 },
+        weights: { squat: 8.5, rdl: 8.5, row: 8.5, floor: 8.5, ohp: 6, curl: 6, tricep: 6 }, plankSec: 40 },
+      { id: 4, label: "Силовой блок", weeks: [9, 10, 11], sets: { big: 3, iso: 2 },
+        weights: { squat: 11, rdl: 11, row: 11, floor: 11, ohp: 6, curl: 6, tricep: 6 }, plankSec: 45 },
+      { id: 5, label: "Разгрузочная неделя", weeks: [12], sets: { big: 2, iso: 1 },
+        weights: { squat: 7.5, rdl: 7.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 5 }, plankSec: 30 },
+      { id: 6, label: "Рост после разгрузки", weeks: [13, 14, 15], sets: { big: 3, iso: 2 },
+        weights: { squat: 11, rdl: 11, row: 11, floor: 11, ohp: 7.5, curl: 7.5, tricep: 7.5 }, plankSec: 50 },
+      { id: 7, label: "Закрепляем силу", weeks: [16, 17, 18], sets: { big: 3, iso: 2 },
+        weights: { squat: 12, rdl: 12, row: 12, floor: 12, ohp: 7.5, curl: 7.5, tricep: 7.5 }, plankSec: 55 },
+      { id: 8, label: "Финальный блок", weeks: [19, 20, 21], sets: { big: 3, iso: 2 },
+        weights: { squat: 12, rdl: 12, row: 12, floor: 12, ohp: 8.5, curl: 8.5, tricep: 8.5 }, plankSec: 60 },
     ];
 
     function capNum(v) { return typeof v === "number" ? Math.min(v, MAX_DB) : v; }
@@ -139,27 +149,7 @@
     function getPhaseForWeek(week) {
       const found = BASE_PHASES.find((ph) => week >= ph.weeks[0] && week <= ph.weeks[ph.weeks.length - 1]);
       if (found) return found;
-      const last = BASE_PHASES[BASE_PHASES.length - 1];
-      const afterLastWeek = last.weeks[last.weeks.length - 1];
-      const blockSize = 3;
-      const weeksAfter = week - afterLastWeek;
-      const blockIndex = Math.ceil(weeksAfter / blockSize);
-      const blockStart = afterLastWeek + (blockIndex - 1) * blockSize + 1;
-      return {
-        id: 5 + blockIndex,
-        label: `Фаза ${5 + blockIndex}`,
-        weeks: Array.from({ length: blockSize }, (_, i) => blockStart + i),
-        sets: last.sets,
-        weights: {
-          squat: capNum(last.weights.squat + 2 * blockIndex),
-          row: capNum(last.weights.row + 2 * blockIndex),
-          floor: capNum(last.weights.floor + 2 * blockIndex),
-          ohp: capNum(last.weights.ohp + 2 * blockIndex),
-          curl: capNum(last.weights.curl + 1 * blockIndex),
-          tricep: capNum(last.weights.tricep + 1 * blockIndex),
-        },
-        plankSec: last.plankSec + 10 * blockIndex,
-      };
+      return BASE_PHASES[BASE_PHASES.length - 1];
     }
 
     function baseNumeric(phase, key) {
@@ -178,35 +168,50 @@
       return round1(baseNumeric(phase, key) + delta);
     }
 
-    // Exercises metadata with local GymVisual 3D Human GIFs
+    function discSetup(weight, singleDumbbell = false) {
+      const variants = {
+        5: "по 1 диску 1.25 кг с каждой стороны",
+        6: "по 1 диску 3 кг с каждой стороны",
+        7.5: "по 1 диску 2.5 кг + 1.25 кг с каждой стороны",
+        8.5: "по 1 диску 3 кг + 1.25 кг с каждой стороны",
+        11: "по 1 диску 3 кг + 2.5 кг с каждой стороны",
+        12: "по 2 диска 3 кг с каждой стороны",
+      };
+      const prefix = singleDumbbell ? "на одну гантель: " : "на каждую гантель: ";
+      return variants[weight] ? prefix + variants[weight] : `${prefix}соберите ${weight} кг`;
+    }
+
     const EXERCISES = [
       { key: "squat", name: "Приседания с гантелями", reps: "12–15 повторов", type: "big", restSec: 90,
-        gif: "./gifs/squat.gif",
+        videoId: "aclHkTcP9U0",
         tip: "Держи гантели в опущенных руках или у плеч. Спина прямая, таз отводи назад, приседай до параллели бедра с полом.",
-        discSetup: (w) => w === 6 ? "по 1 диске 3 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
+        discSetup: (w) => discSetup(w) },
+      { key: "rdl", name: "Румынская тяга с гантелями", reps: "10–12 повторов", type: "big", restSec: 90,
+        videoId: "JCXUYuzwNrM",
+        tip: "Гантели скользят вдоль ног. Мягко согни колени, отводи таз назад и держи спину ровной; почувствуй растяжение задней поверхности бедра.",
+        discSetup: (w) => discSetup(w) },
       { key: "row", name: "Тяга гантели в наклоне", reps: "10–12 повторов", type: "big", restSec: 90,
-        gif: "./gifs/row.gif",
+        videoId: "ufhQhwyrx-4",
         tip: "Опрись коленом и рукой на диван/стул. Корпус параллелен полу. Тяни гантель к поясу, ощущая сжатие лопатки.",
-        discSetup: (w) => w === 5 ? "по 1 диске 2.5 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
+        discSetup: (w) => discSetup(w) },
       { key: "floor", name: "Жим гантелей лёжа на полу", reps: "10–12 повторов", type: "big", restSec: 90,
-        gif: "./gifs/floor.gif",
+        videoId: "T0Y3OBF1bNI",
         tip: "Лёжа на спине на коврике, ноги согнуты. Локти под углом 45° к корпусу, выжимай гантели вверх над грудью.",
-        discSetup: (w) => w === 5 ? "по 1 диске 2.5 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
+        discSetup: (w) => discSetup(w) },
       { key: "ohp", name: "Жим гантелей стоя над головой", reps: "10–12 повторов", type: "big", restSec: 75,
-        gif: "./gifs/ohp.gif",
+        videoId: "0JfYxMRsUCQ",
         tip: "Стоя, пресс и ягодицы напряжены. Выжимай гантели вверх от плеч над головой, не прогибая поясницу.",
-        discSetup: (w) => w === 2.5 ? "по 1 диске 1.25 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
+        discSetup: (w) => discSetup(w) },
       { key: "curl", name: "Сгибания на бицепс", reps: "12–15 повторов", type: "iso", restSec: 60,
-        gif: "./gifs/curl.gif",
+        videoId: "NHcg1wuGz84",
         tip: "Стоя, локти зафиксированы у туловища. Поднимай гантели плавным движением, разворачивая кисти к себе.",
-        discSetup: (w) => w === 2.5 ? "по 1 диске 1.25 кг на каждую сторону" : `диски суммой ${w/2} кг на сторону` },
-      { key: "tricep", name: "Разгибание на трицепс из-за головы", reps: "12–15 повторов", type: "iso", restSec: 60,
-        gif: "./gifs/tricep.gif",
+        discSetup: (w) => discSetup(w) },
+      { key: "tricep", name: "Разгибание на трицепс", reps: "12–15 повторов", type: "iso", restSec: 60,
+        videoId: "xbNm9fRoUTw",
         tip: "Возьми 1 гантель ОБЕИМИ руками за блин, подняв над головой. Опускай за голову и полностью разгибай вверх.",
-        discSetup: (w) => w === 2.5 ? "1 гантель с 2 дисками по 1.25 кг (всего 2.5 кг)" : `1 гантель весом ${w} кг` },
+        discSetup: (w) => discSetup(w, true) },
     ];
 
-    // Day styles: Coral Red, Deep Purple & Electric Blue
     const DAYS = [
       { key: "mon", label: "День 1", color: "#C0392B", bgGrad: "linear-gradient(135deg, rgba(192,57,43,0.15) 0%, rgba(29,24,21,1) 100%)" },
       { key: "wed", label: "День 2", color: "#8E44AD", bgGrad: "linear-gradient(135deg, rgba(142,68,173,0.15) 0%, rgba(29,24,21,1) 100%)" },
@@ -214,12 +219,13 @@
     ];
 
     function workoutFor(phase, week, overrides) {
-      const list = EXERCISES.map((ex) => ({
-        key: ex.key, name: ex.name, reps: ex.reps, restSec: ex.restSec, tip: ex.tip, discSetup: ex.discSetup, gif: ex.gif,
+      const exercisesForWeek = week === 1 ? EXERCISES.filter((ex) => ex.key !== "rdl") : EXERCISES;
+      const list = exercisesForWeek.map((ex) => ({
+        key: ex.key, name: ex.name, reps: ex.reps, restSec: ex.restSec, tip: ex.tip, discSetup: ex.discSetup, videoId: ex.videoId,
         weight: effectiveWeight(ex.key, week, overrides),
         sets: ex.type === "big" ? phase.sets.big : phase.sets.iso,
       }));
-      list.push({ key: "plank", name: "Планка", reps: `${phase.plankSec} сек`, restSec: 60, tip: "Планка на предплечьях. Корпус прямой как натянутая струна, пресс сжат.", gif: "./gifs/plank.gif", weight: null, sets: 3, isTime: true });
+      list.push({ key: "plank", name: "Планка", reps: `${phase.plankSec} сек`, restSec: 60, tip: "Планка на предплечьях. Корпус прямой как натянутая струна, пресс сжат.", videoId: "nEnNoRipej0", weight: null, sets: 3, isTime: true });
       return list;
     }
 
@@ -262,7 +268,6 @@
       done: "#4C9A6B", text: "#F2EDE7", textMuted: "#A79D92", textFaint: "#6E655B",
     };
 
-    // Modal Info Popup with GymVisual 3D GIF
     function InfoModal({ exercise, onClose }) {
       if (!exercise) return null;
 
@@ -276,13 +281,16 @@
               <button onClick={onClose} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 22, cursor: "pointer", padding: "0 4px" }}>✕</button>
             </div>
 
-            {/* Animation GIF */}
-            {exercise.gif && (
-              <div style={{ width: "100%", minHeight: 200, background: "#110E0C", borderRadius: 12, overflow: "hidden", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.border}` }}>
-                <img
-                  src={exercise.gif}
-                  alt={exercise.name}
-                  style={{ maxWidth: "100%", maxHeight: 230, objectFit: "contain" }}
+            {exercise.videoId && (
+              <div style={{ width: "100%", aspectRatio: "16 / 9", background: "#110E0C", borderRadius: 12, overflow: "hidden", marginBottom: 14, border: `1px solid ${C.border}` }}>
+                <iframe
+                  title={`Техника: ${exercise.name}`}
+                  width="100%"
+                  height="100%"
+                  src={`https://www.youtube-nocookie.com/embed/${exercise.videoId}?rel=0&playsinline=1`}
+                  style={{ border: 0 }}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
                 />
               </div>
             )}
@@ -310,16 +318,16 @@
     function PlateBadge({ week, weeksIntoPhase, phaseLength }) {
       const r = 92;
       return (
-        <div style={{ position: "relative", width: 150, height: 150, flexShrink: 0, margin: "0 auto" }}>
-          <svg viewBox="0 0 200 200" width="150" height="150">
+        <div style={{ position: "relative", width: 130, height: 130, flexShrink: 0, margin: "0 auto" }}>
+          <svg viewBox="0 0 200 200" width="130" height="130">
             <circle cx="100" cy="100" r={r} fill={C.accentDim} stroke={C.accent} strokeWidth="3" />
             <circle cx="100" cy="100" r={r - 14} fill="none" stroke={C.accent} strokeWidth="1.5" opacity="0.5" />
             <circle cx="100" cy="100" r={r - 28} fill="none" stroke={C.accent} strokeWidth="1.5" opacity="0.35" />
             <circle cx="100" cy="100" r="34" fill={C.bg} stroke={C.accent} strokeWidth="2" />
           </svg>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: C.text }}>
-            <span style={{ fontSize: 10, letterSpacing: "0.18em", color: C.textMuted, fontWeight: 700, marginBottom: -2 }}>НЕДЕЛЯ</span>
-            <span style={{ fontSize: 34, fontWeight: 900, lineHeight: 1 }}>{week}</span>
+            <span style={{ fontSize: 9, letterSpacing: "0.18em", color: C.textMuted, fontWeight: 700, marginBottom: -2 }}>НЕДЕЛЯ</span>
+            <span style={{ fontSize: 32, fontWeight: 900, lineHeight: 1 }}>{week}</span>
           </div>
           <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 5 }}>
             {Array.from({ length: phaseLength }, (_, i) => (
@@ -376,8 +384,7 @@
       );
     }
 
-    // Active Countdown Timer Component between sets
-    function RestTimer({ durationSec, onFinish }) {
+    function RestTimer({ durationSec, onFinish, isLast }) {
       const [secondsLeft, setSecondsLeft] = useState(durationSec);
 
       useEffect(() => {
@@ -394,7 +401,7 @@
       if (secondsLeft <= 0) {
         return (
           <span style={{ fontSize: 11, color: C.done, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "rgba(76,154,107,0.15)" }}>
-            ✓ Пора подход!
+            ✓ {isLast ? "Пора к следующему упражнению!" : "Пора к подходу!"}
           </span>
         );
       }
@@ -406,25 +413,39 @@
       );
     }
 
-    // Clean Layout Row for Exercise
+    function announceRestEnd() {
+      try {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.notificationOccurred("success");
+        }
+        if ("speechSynthesis" in window) {
+          window.speechSynthesis.cancel();
+          const phrase = new SpeechSynthesisUtterance("Let's go, go, go!");
+          phrase.lang = "en-US";
+          phrase.rate = 1.14;
+          window.speechSynthesis.speak(phrase);
+        }
+      } catch (e) {}
+    }
+
     function ExerciseRow({ ex, checks, onToggleSet, onWeightChange, onOpenInfo, activeTimerIndex, setActiveTimerIndex }) {
       return (
         <div style={{ padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
-          {/* Top Line: Name + Info Icon on left, Weight ✎ on right */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 8 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 14.5, color: C.text, fontWeight: 600, lineHeight: 1.3 }}>{ex.name}</span>
-              <button onClick={() => onOpenInfo(ex)}
-                      style={{ background: "rgba(255,255,255,0.08)", border: `1px solid ${C.border}`, borderRadius: 12, width: 22, height: 22, color: C.textMuted, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                ⓘ
-              </button>
+            <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+              <span style={{ fontSize: 14.5, color: C.text, fontWeight: 600, lineHeight: 1.3 }}>
+                {ex.name}
+                <button onClick={() => onOpenInfo(ex)}
+                        style={{ marginLeft: 6, verticalAlign: "middle", background: "rgba(255,255,255,0.08)", border: `1px solid ${C.border}`, borderRadius: 12, width: 22, height: 22, color: C.textMuted, fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                  ⓘ
+                </button>
+              </span>
             </div>
-            <div style={{ flexShrink: 0 }}>
+            <div style={{ flexShrink: 0, marginTop: 2 }}>
               <EditableWeight value={ex.weight} isTime={ex.isTime} onSave={(v) => onWeightChange(ex.key, v)} />
             </div>
           </div>
 
-          {/* Bottom Line: Label "Подходы:" + Checkboxes with Reps */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <span style={{ fontSize: 12, color: C.textMuted, fontWeight: 600 }}>Подходы:</span>
@@ -433,18 +454,15 @@
                   <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                     <CheckBox checked={c} onClick={() => {
                       onToggleSet(ex.key, i);
-                      if (!c && i < checks.length - 1) {
-                        setActiveTimerIndex(i);
-                      }
+                      if (!c) setActiveTimerIndex(i);
                     }} size={22} />
                     <span style={{ fontSize: 11.5, color: C.textFaint }}>
                       {i + 1} <span style={{ opacity: 0.75 }}>({ex.reps.split(" ")[0]})</span>
                     </span>
                   </div>
 
-                  {/* Rest Timer */}
-                  {c && i < checks.length - 1 && !checks[i + 1] && activeTimerIndex === i && (
-                    <RestTimer durationSec={ex.restSec || 60} onFinish={() => setActiveTimerIndex(null)} />
+                  {c && activeTimerIndex === i && (
+                    <RestTimer durationSec={ex.restSec || 60} isLast={i === checks.length - 1} onFinish={() => { setActiveTimerIndex(null); announceRestEnd(); }} />
                   )}
                 </React.Fragment>
               ))}
@@ -474,13 +492,18 @@
       );
     }
 
-    function DayCard({ day, phase, week, checksForDay, onToggleSet, onToggleAll, onWeightChange,
-                        bodyWeight, onBodyWeightChange, currentPhotoUrl, onPhotoPick, photoBusy, onOpenInfo }) {
-      const list = workoutFor(phase, week, {});
+    function DayCard({ day, phase, week, overrides, checksForDay, onToggleSet, onToggleAll, onWeightChange,
+                        bodyWeight, onBodyWeightChange, currentPhotoUrl, onPhotoPick, photoBusy, onOpenInfo, defaultOpen }) {
+      const list = workoutFor(phase, week, overrides);
       const allDone = list.every((ex) => checksForDay && checksForDay[ex.key] && checksForDay[ex.key].every(Boolean));
       const showPhoto = day.key === "mon" && isPhotoWeek(week);
       
       const [activeTimers, setActiveTimers] = useState({});
+      const [open, setOpen] = useState(defaultOpen);
+
+      useEffect(() => {
+        setOpen(defaultOpen);
+      }, [defaultOpen]);
 
       return (
         <div style={{
@@ -490,17 +513,18 @@
           boxShadow: allDone ? "0 4px 14px rgba(76,154,107,0.15)" : "none",
           transition: "border-color 200ms, box-shadow 200ms"
         }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, cursor: "pointer" }}
-               onClick={() => onToggleAll(day.key, !allDone)}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: open ? 10 : 0, gap: 10 }}>
+            <button onClick={() => setOpen((value) => !value)} aria-expanded={open}
+              style={{ flex: "1 1 auto", minWidth: 0, display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: C.text, padding: 0, textAlign: "left", cursor: "pointer" }}>
               <span style={{ width: 10, height: 10, borderRadius: 999, background: allDone ? C.done : day.color }} />
               <span style={{ fontSize: 18, fontWeight: 800, color: C.text }}>{day.label}</span>
               {allDone && <span style={{ fontSize: 11, color: C.done, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "rgba(76,154,107,0.2)" }}>Готово ✓</span>}
-            </div>
-            <CheckBox checked={allDone} onClick={(e) => { e.stopPropagation(); onToggleAll(day.key, !allDone); }} size={28} />
+              <span aria-hidden="true" style={{ marginLeft: "auto", color: C.textMuted, fontSize: 18 }}>{open ? "⌃" : "⌄"}</span>
+            </button>
+            <CheckBox checked={allDone} onClick={() => onToggleAll(day.key, !allDone)} size={28} />
           </div>
 
-          {day.key === "mon" && (
+          {open && day.key === "mon" && (
             <div style={{ background: C.surfaceRaised, borderRadius: 10, padding: "10px 12px", marginBottom: 12, display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 14 }}>⚖</span>
@@ -514,7 +538,7 @@
             </div>
           )}
 
-          <div>
+          {open && <div>
             {list.map((ex) => (
               <ExerciseRow
                 key={ex.key}
@@ -527,16 +551,16 @@
                 setActiveTimerIndex={(idx) => setActiveTimers((prev) => ({ ...prev, [ex.key]: idx }))}
               />
             ))}
-          </div>
+          </div>}
 
-          <div style={{ marginTop: 12, fontSize: 12, color: C.textMuted, lineHeight: 1.4 }}>
+          {open && <div style={{ marginTop: 12, fontSize: 12, color: C.textMuted, lineHeight: 1.4 }}>
             🥤 После тренировки: <span style={{ color: C.accent, fontWeight: 700 }}>протеин + креатин (3–5 г)</span>
-          </div>
+          </div>}
         </div>
       );
     }
 
-    function ProgressPanel({ week, overrides, bodyWeightLog, photoWeeks, getPhotoLocal }) {
+    function ProgressPanel({ week, overrides, bodyWeightLog, photoWeeks, completedWeeks, getPhotoLocal }) {
       const [open, setOpen] = useState(false);
       const [p1, setP1] = useState(null);
       const [p2, setP2] = useState(null);
@@ -562,7 +586,10 @@
             <span style={{ color: C.textMuted, fontSize: 12 }}>{open ? "свернуть" : "показать"}</span>
           </button>
           {open && (
-            <div style={{ marginTop: 14 }}>
+           <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 12.5, color: C.textMuted, marginBottom: 14 }}>
+                Закрыто тренировочных недель: <span style={{ color: C.text, fontWeight: 700 }}>{Object.keys(completedWeeks).length}</span>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, fontSize: 13.5 }}>
                 <span style={{ color: C.textMuted }}>Вес тела:</span>
                 {bwFirst != null ? (
@@ -613,7 +640,7 @@
     function Roadmap({ currentWeek, overrides }) {
       const [open, setOpen] = useState(false);
       const rows = [];
-      for (let w = 1; w <= 20; w++) {
+        for (let w = 1; w <= 21; w++) {
         const ph = getPhaseForWeek(w);
         if (rows.length === 0 || rows[rows.length - 1].id !== ph.id) rows.push({ id: ph.id, label: ph.label, weeks: ph.weeks, phase: ph });
       }
@@ -649,11 +676,13 @@
       const [checks, setChecks] = useState({});
       const [bodyWeightLog, setBodyWeightLog] = useState({});
       const [photoWeeks, setPhotoWeeks] = useState([]);
+      const [completedWeeks, setCompletedWeeks] = useState({});
       const [currentPhotoUrl, setCurrentPhotoUrl] = useState(null);
       const [photoBusy, setPhotoBusy] = useState(false);
       const [loaded, setLoaded] = useState(false);
       const [justAdvanced, setJustAdvanced] = useState(false);
       const [modalExercise, setModalExercise] = useState(null);
+      const [weightIncreasedMsg, setWeightIncreasedMsg] = useState("");
       const advancingRef = useRef(false);
 
       useEffect(() => {
@@ -665,6 +694,7 @@
             setChecks(saved.checks && Object.keys(saved.checks).length ? saved.checks : emptyChecksForWeek(getPhaseForWeek(saved.week || 1), saved.week || 1, saved.overrides || {}));
             setBodyWeightLog(saved.bodyWeightLog || {});
             setPhotoWeeks(saved.photoWeeks || []);
+            setCompletedWeeks(saved.completedWeeks || {});
           } else {
             setChecks(emptyChecksForWeek(getPhaseForWeek(1), 1, {}));
           }
@@ -674,8 +704,8 @@
 
       useEffect(() => {
         if (!loaded) return;
-        saveStateStorage({ week, overrides, checks, bodyWeightLog, photoWeeks });
-      }, [week, overrides, checks, bodyWeightLog, photoWeeks, loaded]);
+        saveStateStorage({ schemaVersion: 3, week, overrides, checks, bodyWeightLog, photoWeeks, completedWeeks });
+      }, [week, overrides, checks, bodyWeightLog, photoWeeks, completedWeeks, loaded]);
 
       useEffect(() => {
         if (loaded) {
@@ -694,17 +724,41 @@
       useEffect(() => {
         if (allDaysDone && !advancingRef.current && loaded) {
           advancingRef.current = true;
+          setCompletedWeeks((previous) => ({ ...previous, [week]: new Date().toISOString() }));
+          if (week >= 21) return;
+          
+          const nextWeek = week + 1;
+          const currentPhase = getPhaseForWeek(week);
+          const nextPhase = getPhaseForWeek(nextWeek);
+          
+          let increased = false;
+          if (nextPhase.weights.squat > currentPhase.weights.squat || nextPhase.weights.ohp > currentPhase.weights.ohp) {
+            increased = true;
+          }
+
           setJustAdvanced(true);
           const t = setTimeout(() => {
-            const nextWeek = week + 1;
             setWeek(nextWeek);
-            setChecks(emptyChecksForWeek(getPhaseForWeek(nextWeek), nextWeek, overrides));
+            setChecks(emptyChecksForWeek(nextPhase, nextWeek, overrides));
+            
+            if (increased) {
+              setWeightIncreasedMsg(`💪 Неделя ${nextWeek}: веса увеличены! Проверьте новые значения.`);
+              if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred("warning");
+              }
+            } else {
+              setWeightIncreasedMsg("");
+              if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred("success");
+              }
+            }
+            
             advancingRef.current = false;
             setJustAdvanced(false);
           }, 1200);
           return () => clearTimeout(t);
         }
-      }, [allDaysDone, loaded]);
+      }, [allDaysDone, loaded, week, overrides]);
 
       const toggleSet = useCallback((dayKey, exKey, idx) => {
         setChecks((prev) => {
@@ -743,16 +797,14 @@
         } finally { setPhotoBusy(false); }
       }, [week]);
 
-      const resetWeek = () => setChecks(emptyChecksForWeek(phase, week, overrides));
-      
       const resetAll = () => {
         if (!window.confirm("Сбросить весь прогресс и начать с недели 1?")) return;
-        setWeek(1); setOverrides({}); setChecks(emptyChecksForWeek(getPhaseForWeek(1), 1, {})); setBodyWeightLog({}); setPhotoWeeks([]); setCurrentPhotoUrl(null);
+        setWeek(1); setOverrides({}); setChecks(emptyChecksForWeek(getPhaseForWeek(1), 1, {})); setBodyWeightLog({}); setPhotoWeeks([]); setCurrentPhotoUrl(null); setCompletedWeeks({}); setWeightIncreasedMsg("");
       };
 
       const nudgeWeek = (delta) => {
         const w = Math.max(1, week + delta);
-        setWeek(w); setChecks(emptyChecksForWeek(getPhaseForWeek(w), w, overrides));
+        setWeek(w); setChecks(emptyChecksForWeek(getPhaseForWeek(w), w, overrides)); setWeightIncreasedMsg("");
       };
 
       if (!loaded) return <div style={{ background: C.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: C.textMuted, fontSize: 16 }}>Загрузка трекера…</div>;
@@ -764,36 +816,50 @@
               <PlateBadge week={week} weeksIntoPhase={weeksIntoPhase} phaseLength={phase.weeks.length} />
               <div style={{ marginTop: 12 }}>
                 <div style={{ fontSize: 12, letterSpacing: "0.14em", color: C.accent, fontWeight: 800, marginBottom: 4 }}>{phase.label.toUpperCase()}</div>
-                <div style={{ fontSize: 12.5, color: C.textMuted }}>Редактируйте веса через значок ✎ (нажмите ⓘ для 3D-анимации GymVisual)</div>
+                <div style={{ fontSize: 12.5, color: C.textMuted }}>Нажмите ⓘ для просмотра видео идеальной техники.</div>
                 {justAdvanced && (
                   <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(76,154,107,0.2)", border: `1px solid ${C.done}`, borderRadius: 8, fontSize: 13.5, color: C.done, fontWeight: 700 }}>
-                    🎉 Неделя {week} успешно закрыта! Переходим дальше…
+                    🎉 Отличная работа! Тренировка завершена. Переходим дальше…
+                  </div>
+                )}
+                {weightIncreasedMsg && !justAdvanced && (
+                  <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(192,57,43,0.15)", border: `1px solid ${C.accent}`, borderRadius: 8, fontSize: 13.5, color: "#fff", fontWeight: 700 }}>
+                    {weightIncreasedMsg}
                   </div>
                 )}
               </div>
             </div>
 
-            <ProgressPanel week={week} overrides={overrides} bodyWeightLog={bodyWeightLog} photoWeeks={photoWeeks} getPhotoLocal={getPhotoLocal} />
+            <ProgressPanel week={week} overrides={overrides} bodyWeightLog={bodyWeightLog} photoWeeks={photoWeeks} completedWeeks={completedWeeks} getPhotoLocal={getPhotoLocal} />
 
-            {DAYS.map((d) => (
-              <DayCard key={d.key} day={d} phase={phase} week={week} checksForDay={checks[d.key]}
-                onToggleSet={toggleSet} onToggleAll={toggleAll} onWeightChange={changeWeight}
-                bodyWeight={bodyWeightLog[week] ?? null} onBodyWeightChange={changeBodyWeight}
-                currentPhotoUrl={currentPhotoUrl} onPhotoPick={pickPhoto} photoBusy={photoBusy}
-                onOpenInfo={setModalExercise} />
-            ))}
+            {DAYS.map((d, index) => {
+              const allDaysStatuses = DAYS.map(dayInfo => {
+                const l = workoutFor(phase, week, overrides);
+                return checks[dayInfo.key] && l.every((ex) => checks[dayInfo.key][ex.key] && checks[dayInfo.key][ex.key].every(Boolean));
+              });
+              
+              const firstUndoneIndex = allDaysStatuses.indexOf(false);
+              const shouldBeOpen = firstUndoneIndex === -1 ? (index === 0) : (index === firstUndoneIndex);
+
+              return (
+                <DayCard key={`${week}-${d.key}`} day={d} phase={phase} week={week} overrides={overrides} checksForDay={checks[d.key]}
+                  onToggleSet={toggleSet} onToggleAll={toggleAll} onWeightChange={changeWeight}
+                  bodyWeight={bodyWeightLog[week] ?? null} onBodyWeightChange={changeBodyWeight}
+                  currentPhotoUrl={currentPhotoUrl} onPhotoPick={pickPhoto} photoBusy={photoBusy}
+                  onOpenInfo={setModalExercise} defaultOpen={shouldBeOpen} />
+              )
+            })}
 
             <Roadmap currentWeek={week} overrides={overrides} />
 
             <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${C.border}`, display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
-              <button onClick={resetWeek} style={ghostBtn}>Сбросить эту неделю</button>
               <button onClick={() => nudgeWeek(-1)} style={ghostBtn}>← Пред. неделя</button>
               <button onClick={() => nudgeWeek(1)} style={ghostBtn}>След. неделя →</button>
               <button onClick={resetAll} style={{ ...ghostBtn, color: C.accent }}>Начать заново</button>
             </div>
           </div>
 
-          {/* Info Modal with GymVisual 3D GIF */}
+          {/* Info Modal */}
           <InfoModal exercise={modalExercise} onClose={() => setModalExercise(null)} />
         </div>
       );
