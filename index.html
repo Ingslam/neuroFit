@@ -278,6 +278,7 @@
       bg: "#15120F", surface: "#1D1815", surfaceRaised: "#241E19", border: "#332B24",
       accent: "#C0392B", accentDim: "#5A241D", accentSoft: "#3A2621",
       done: "#4C9A6B", text: "#F2EDE7", textMuted: "#A79D92", textFaint: "#6E655B",
+      blueFocus: "#2980B9"
     };
 
     function ImageModal({ src, onClose }) {
@@ -338,30 +339,43 @@
       );
     }
 
-    function PlateBadge({ week, weeksIntoPhase, phaseLength }) {
-      const r = 92;
+    function WeekHeroBadge({ week, phase, currentChecks, overrides }) {
+      const list = workoutFor(phase, week, overrides);
+      
+      const dayStatuses = DAYS.map((d) => {
+        const checksForDay = currentChecks[d.key];
+        const isDone = checksForDay && list.every((ex) => checksForDay[ex.key] && checksForDay[ex.key].every(Boolean));
+        return { label: d.label, isDone };
+      });
+
       return (
-        <div style={{ position: "relative", width: 124, height: 124, flexShrink: 0, margin: "0 auto" }}>
-          <svg viewBox="0 0 200 200" width="124" height="124">
-            <circle cx="100" cy="100" r={r} fill={C.accentDim} stroke={C.accent} strokeWidth="3" />
-            <circle cx="100" cy="100" r={r - 14} fill="none" stroke={C.accent} strokeWidth="1.5" opacity="0.5" />
-            <circle cx="100" cy="100" r={r - 28} fill="none" stroke={C.accent} strokeWidth="1.5" opacity="0.35" />
-            <circle cx="100" cy="100" r="34" fill={C.bg} stroke={C.accent} strokeWidth="2" />
-          </svg>
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: C.text }}>
-            <span style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.textMuted, fontWeight: 700, marginBottom: -2 }}>НЕДЕЛЯ</span>
-            <span style={{ fontSize: 30, fontWeight: 900, lineHeight: 1 }}>{week}</span>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: "16px 18px", marginBottom: 16, textAlign: "center", boxShadow: "0 4px 20px rgba(0,0,0,0.25)" }}>
+          <div style={{ fontSize: 11.5, letterSpacing: "0.14em", color: C.accent, fontWeight: 800, textTransform: "uppercase", marginBottom: 4 }}>
+            ЭТАП {phase.id}: {phase.label}
           </div>
-          <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 5 }}>
-            {Array.from({ length: phaseLength }, (_, i) => (
-              <span key={i} style={{ width: 7, height: 7, borderRadius: 9999, background: i < weeksIntoPhase ? C.accent : "transparent", border: `1.5px solid ${C.accent}` }} />
+          <div style={{ fontSize: 26, fontWeight: 900, color: C.text, lineHeight: 1.2, marginBottom: 10 }}>
+            Неделя {week}
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+            {dayStatuses.map((ds, i) => (
+              <div key={i} style={{
+                display: "inline-flex", alignItems: "center", gap: 5,
+                background: ds.isDone ? "rgba(76,154,107,0.18)" : C.surfaceRaised,
+                border: `1px solid ${ds.isDone ? C.done : C.border}`,
+                borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 700,
+                color: ds.isDone ? C.done : C.textMuted
+              }}>
+                <span>{ds.isDone ? "✓" : "○"}</span>
+                <span>{ds.label}</span>
+              </div>
             ))}
           </div>
         </div>
       );
     }
 
-    function WeekNavigationHeader({ week, maxWeeks = 21, onNudge, isCompleted }) {
+    function WeekNavigationHeader({ week, maxWeeks = 21, onNudge, isCompleted, isLocked }) {
       return (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "8px 12px", marginBottom: 14 }}>
           <button
@@ -381,10 +395,12 @@
             <div style={{ fontSize: 14, fontWeight: 800, color: C.text }}>
               Неделя {week} <span style={{ color: C.textMuted, fontWeight: 500, fontSize: 12 }}>из {maxWeeks}</span>
             </div>
-            {isCompleted ? (
+            {isLocked ? (
+              <div style={{ fontSize: 11, color: "#E67E22", fontWeight: 700, marginTop: 1 }}>🔒 Недоступна</div>
+            ) : isCompleted ? (
               <div style={{ fontSize: 11, color: C.done, fontWeight: 700, marginTop: 1 }}>✓ Завершена</div>
             ) : (
-              <div style={{ fontSize: 11, color: "#E67E22", fontWeight: 600, marginTop: 1 }}>В процессе</div>
+              <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, marginTop: 1 }}>В процессе</div>
             )}
           </div>
 
@@ -454,7 +470,7 @@
           window.speechSynthesis.cancel();
           const phrase = new SpeechSynthesisUtterance("Let's goooooo!");
           phrase.lang = "en-US";
-          phrase.rate = 0.92; // Slightly stretched and clear
+          phrase.rate = 0.92;
           window.speechSynthesis.speak(phrase);
         }
       } catch (e) {}
@@ -478,10 +494,7 @@
               </span>
               <span style={{ fontSize: 11, color: C.textMuted, marginLeft: 2 }}>{showDetails ? "⌃" : "⌄"}</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 11.5, color: C.textMuted }}>{checked ? "Готово" : "Отметить"}</span>
-              <CheckBox checked={checked} onClick={onToggle} size={22} />
-            </div>
+            <CheckBox checked={checked} onClick={onToggle} size={22} />
           </div>
 
           {showDetails && (
@@ -495,28 +508,25 @@
       );
     }
 
-    function ExerciseRow({ ex, checks, onToggleSet, onOpenInfo, activeTimerIndex, setActiveTimerIndex, isFocused }) {
+    function ExerciseRow({ ex, checks, onToggleSet, onOpenInfo, activeTimerIndex, setActiveTimerIndex }) {
       const words = ex.name.split(" ");
       const lastWord = words.pop();
       const mainText = words.join(" ");
+
+      // Focused only when at least 1 set is checked, but not all sets completed yet
+      const isFocused = checks.some(Boolean) && !checks.every(Boolean);
 
       return (
         <div style={{
           padding: "10px 8px",
           marginBottom: 6,
           borderRadius: 10,
-          background: isFocused ? "rgba(192,57,43,0.08)" : "transparent",
-          border: isFocused ? `1px solid rgba(192,57,43,0.4)` : `1px solid transparent`,
-          borderBottom: isFocused ? `1px solid rgba(192,57,43,0.4)` : `1px solid ${C.border}`,
-          transition: "background 200ms, border-color 200ms"
+          background: "transparent",
+          borderBottom: isFocused ? `2px solid ${C.blueFocus}` : `1px solid ${C.border}`,
+          transition: "border-color 200ms"
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 8 }}>
             <div style={{ flex: "1 1 auto", minWidth: 0, fontSize: 14.5, color: C.text, fontWeight: 600, lineHeight: 1.3 }}>
-              {isFocused && (
-                <span style={{ fontSize: 10, fontWeight: 800, background: C.accent, color: "#fff", padding: "1px 5px", borderRadius: 4, marginRight: 6, verticalAlign: "middle", textTransform: "uppercase" }}>
-                  Текущее
-                </span>
-              )}
               {mainText}{mainText ? " " : ""}
               <span style={{ whiteSpace: "nowrap" }}>
                 {lastWord}
@@ -526,7 +536,7 @@
                 </button>
               </span>
             </div>
-            <div style={{ flexShrink: 0, marginTop: 2, fontSize: 13, color: isFocused ? C.accent : C.textMuted, fontWeight: 700, fontFamily: "ui-monospace, monospace", whiteSpace: "nowrap" }}>
+            <div style={{ flexShrink: 0, marginTop: 2, fontSize: 13, color: isFocused ? C.blueFocus : C.textMuted, fontWeight: 700, fontFamily: "ui-monospace, monospace", whiteSpace: "nowrap" }}>
               {ex.isTime || ex.weight == null ? "без веса" : `${ex.weight} кг`}
             </div>
           </div>
@@ -555,6 +565,24 @@
               ))}
             </div>
           </div>
+
+          {isFocused && (
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 8, marginBottom: 2 }}>
+              <span style={{
+                background: "#0D0B0A",
+                color: "#F2EDE7",
+                border: `1px solid ${C.blueFocus}`,
+                borderRadius: 6,
+                padding: "2px 8px",
+                fontSize: 10,
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em"
+              }}>
+                ● Текущее
+              </span>
+            </div>
+          )}
         </div>
       );
     }
@@ -582,7 +610,7 @@
     }
 
     function DayCard({ day, phase, week, overrides, checksForDay, onToggleSet, onToggleAll, onToggleWarmup,
-                        bodyWeight, onBodyWeightChange, currentPhotoUrl, onPhotoPick, photoBusy, onOpenInfo, defaultOpen, onPreviewImage }) {
+                        bodyWeight, onBodyWeightChange, currentPhotoUrl, onPhotoPick, photoBusy, onOpenInfo, defaultOpen, onPreviewImage, isLocked }) {
       const list = workoutFor(phase, week, overrides);
       const allDone = list.every((ex) => checksForDay && checksForDay[ex.key] && checksForDay[ex.key].every(Boolean));
       const showPhoto = day.key === "mon" && isPhotoWeek(week);
@@ -594,23 +622,15 @@
         setOpen(defaultOpen);
       }, [defaultOpen]);
 
-      // Focus Mode: find the first exercise that has unchecked sets
-      const activeExerciseKey = useMemo(() => {
-        if (!checksForDay || allDone) return null;
-        for (const ex of list) {
-          const sets = checksForDay[ex.key] || [];
-          if (!sets.every(Boolean)) return ex.key;
-        }
-        return null;
-      }, [checksForDay, list, allDone]);
-
       return (
         <div style={{
           background: day.bgGrad || C.surface,
           border: `1.5px solid ${allDone ? C.done : day.color}`,
           borderRadius: 14, padding: "16px 16px", marginBottom: 16,
           boxShadow: allDone ? "0 4px 14px rgba(76,154,107,0.15)" : "none",
-          transition: "border-color 200ms, box-shadow 200ms"
+          transition: "border-color 200ms, box-shadow 200ms",
+          opacity: isLocked ? 0.5 : 1,
+          pointerEvents: isLocked ? "none" : "auto"
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: open ? 10 : 0, gap: 10 }}>
             <button onClick={() => { triggerHaptic("selection"); setOpen((value) => !value); }} aria-expanded={open}
@@ -634,7 +654,7 @@
             <div style={{ background: C.surfaceRaised, borderRadius: 10, padding: "10px 12px", marginBottom: 12, display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 14 }}>⚖</span>
-                <span style={{ fontSize: 13, color: C.textMuted }}>Вес тела:</span>
+                <span style={{ fontSize: 13, color: C.textMuted }}>Вес тела (утром натощак):</span>
                 <input type="number" step="0.1" inputMode="decimal" placeholder="—"
                   value={bodyWeight ?? ""} onChange={(e) => onBodyWeightChange(e.target.value === "" ? null : parseFloat(e.target.value))}
                   style={{ width: 62, fontSize: 13, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text }} />
@@ -654,7 +674,6 @@
                 onOpenInfo={onOpenInfo}
                 activeTimerIndex={activeTimers[ex.key]}
                 setActiveTimerIndex={(idx) => setActiveTimers((prev) => ({ ...prev, [ex.key]: idx }))}
-                isFocused={activeExerciseKey === ex.key}
               />
             ))}
           </div>}
@@ -865,7 +884,6 @@
             }
             setOverrides(cleanOverrides);
 
-            // Migration to checksByWeek: preserve existing checks for the saved week
             let initialChecksByWeek = saved.checksByWeek || {};
             if (saved.checks && Object.keys(saved.checks).length > 0 && !saved.checksByWeek) {
               initialChecksByWeek[initialWeek] = saved.checks;
@@ -892,7 +910,6 @@
       }, [week, loaded]);
 
       const phase = getPhaseForWeek(week);
-      const weeksIntoPhase = week - phase.weeks[0] + 1;
 
       // Current week's checks from checksByWeek
       const currentChecks = useMemo(() => {
@@ -900,19 +917,36 @@
         return emptyChecksForWeek(phase, week, overrides);
       }, [checksByWeek, week, phase, overrides]);
 
-      const isCurrentWeekDone = useMemo(() => {
-        const list = workoutFor(phase, week, overrides);
-        return DAYS.every((d) => currentChecks[d.key] && list.every((ex) => currentChecks[d.key][ex.key] && currentChecks[d.key][ex.key].every(Boolean)));
-      }, [phase, week, overrides, currentChecks]);
+      // Check if a specific week is fully completed
+      const checkIsWeekDone = useCallback((targetWeek, checksData = checksByWeek) => {
+        const ph = getPhaseForWeek(targetWeek);
+        const list = workoutFor(ph, targetWeek, overrides);
+        const wChecks = checksData[targetWeek];
+        if (!wChecks) return false;
+        return DAYS.every((d) => wChecks[d.key] && list.every((ex) => wChecks[d.key][ex.key] && wChecks[d.key][ex.key].every(Boolean)));
+      }, [overrides, checksByWeek]);
 
-      useEffect(() => {
-        if (isCurrentWeekDone && !advancingRef.current && loaded) {
+      const isCurrentWeekDone = useMemo(() => {
+        return checkIsWeekDone(week, checksByWeek);
+      }, [week, checksByWeek, checkIsWeekDone]);
+
+      // Lock condition: Week N is locked if Week N-1 is not finished
+      const isWeekLocked = useMemo(() => {
+        if (week <= 1) return false;
+        return !checkIsWeekDone(week - 1, checksByWeek) && !completedWeeks[week - 1];
+      }, [week, checksByWeek, completedWeeks, checkIsWeekDone]);
+
+      // Trigger automatic advancement ONLY when a user marks the final set on the current active week
+      const handlePotentialCompletion = useCallback((updatedChecksByWeek, activeWeek) => {
+        if (advancingRef.current || activeWeek >= 21) return;
+        
+        const isDoneNow = checkIsWeekDone(activeWeek, updatedChecksByWeek);
+        if (isDoneNow) {
           advancingRef.current = true;
-          setCompletedWeeks((previous) => ({ ...previous, [week]: new Date().toISOString() }));
-          if (week >= 21) return;
+          setCompletedWeeks((prev) => ({ ...prev, [activeWeek]: new Date().toISOString() }));
           
-          const nextWeek = week + 1;
-          const currentPhase = getPhaseForWeek(week);
+          const nextWeek = activeWeek + 1;
+          const currentPhase = getPhaseForWeek(activeWeek);
           const nextPhase = getPhaseForWeek(nextWeek);
           
           let increased = false;
@@ -921,7 +955,7 @@
           }
 
           setJustAdvanced(true);
-          const t = setTimeout(() => {
+          setTimeout(() => {
             setWeek(nextWeek);
             setChecksByWeek((prev) => {
               if (prev[nextWeek]) return prev;
@@ -939,9 +973,8 @@
             advancingRef.current = false;
             setJustAdvanced(false);
           }, 1200);
-          return () => clearTimeout(t);
         }
-      }, [isCurrentWeekDone, loaded, week, overrides]);
+      }, [checkIsWeekDone, overrides]);
 
       const toggleSet = useCallback((dayKey, exKey, idx) => {
         setChecksByWeek((prev) => {
@@ -950,9 +983,11 @@
           if (!next[week][dayKey]) next[week][dayKey] = {};
           if (!next[week][dayKey][exKey]) next[week][dayKey][exKey] = [];
           next[week][dayKey][exKey][idx] = !next[week][dayKey][exKey][idx];
+          
+          handlePotentialCompletion(next, week);
           return next;
         });
-      }, [week, overrides]);
+      }, [week, overrides, handlePotentialCompletion]);
 
       const toggleWarmup = useCallback((dayKey) => {
         setChecksByWeek((prev) => {
@@ -975,9 +1010,11 @@
               next[week][dayKey][k] = next[week][dayKey][k].map(() => value);
             }
           });
+
+          handlePotentialCompletion(next, week);
           return next;
         });
-      }, [week, overrides]);
+      }, [week, overrides, handlePotentialCompletion]);
 
       const changeBodyWeight = useCallback((val) => {
         setBodyWeightLog((prev) => { const next = { ...prev }; if (val == null) delete next[week]; else next[week] = val; return next; });
@@ -1012,27 +1049,37 @@
           <div style={{ maxWidth: 600, margin: "0 auto" }}>
             
             {/* Top Week Switcher / Navigation Header */}
-            <WeekNavigationHeader week={week} maxWeeks={21} onNudge={nudgeWeek} isCompleted={isCurrentWeekDone || !!completedWeeks[week]} />
+            <WeekNavigationHeader week={week} maxWeeks={21} onNudge={nudgeWeek} isCompleted={isCurrentWeekDone || !!completedWeeks[week]} isLocked={isWeekLocked} />
+
+            {/* Modern Week Hero Badge (replaces bulky PlateBadge) */}
+            <WeekHeroBadge week={week} phase={phase} currentChecks={currentChecks} overrides={overrides} />
 
             <div style={{ textAlign: "center", marginBottom: 16 }}>
-              <PlateBadge week={week} weeksIntoPhase={weeksIntoPhase} phaseLength={phase.weeks.length} />
-              <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 12, letterSpacing: "0.14em", color: C.accent, fontWeight: 800, marginBottom: 4 }}>{phase.label.toUpperCase()}</div>
-                <div style={{ fontSize: 12.5, color: C.textMuted }}>Нажмите ⓘ для просмотра анимации идеальной техники.</div>
-                {justAdvanced && (
-                  <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(76,154,107,0.2)", border: `1px solid ${C.done}`, borderRadius: 8, fontSize: 13.5, color: C.done, fontWeight: 700 }}>
-                    🎉 Отличная работа! Тренировка завершена. Переходим дальше…
-                  </div>
-                )}
-                {weightIncreasedMsg && !justAdvanced && (
-                  <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(192,57,43,0.15)", border: `1px solid ${C.accent}`, borderRadius: 8, fontSize: 13.5, color: "#fff", fontWeight: 700 }}>
-                    {weightIncreasedMsg}
-                  </div>
-                )}
-              </div>
+              <div style={{ fontSize: 12.5, color: C.textMuted }}>Нажмите ⓘ на упражнении для просмотра анимации техники.</div>
+              {justAdvanced && (
+                <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(76,154,107,0.2)", border: `1px solid ${C.done}`, borderRadius: 8, fontSize: 13.5, color: C.done, fontWeight: 700 }}>
+                  🎉 Отличная работа! Неделя завершена. Переходим дальше…
+                </div>
+              )}
+              {weightIncreasedMsg && !justAdvanced && (
+                <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(192,57,43,0.15)", border: `1px solid ${C.accent}`, borderRadius: 8, fontSize: 13.5, color: "#fff", fontWeight: 700 }}>
+                  {weightIncreasedMsg}
+                </div>
+              )}
             </div>
 
             <ProgressPanel week={week} overrides={overrides} bodyWeightLog={bodyWeightLog} photoWeeks={photoWeeks} completedWeeks={completedWeeks} getPhotoLocal={getPhotoLocal} onPreviewImage={setPreviewImage} />
+
+            {/* If week is locked, show informative notification banner */}
+            {isWeekLocked && (
+              <div style={{ background: "rgba(230,126,34,0.12)", border: "1px solid #E67E22", borderRadius: 12, padding: "14px 16px", marginBottom: 16, textAlign: "center" }}>
+                <div style={{ fontSize: 16, marginBottom: 4 }}>🔒</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#E67E22", marginBottom: 2 }}>Неделя заблокирована</div>
+                <div style={{ fontSize: 12.5, color: C.textMuted }}>
+                  Чтобы открыть тренировки Недели {week}, сначала завершите все 3 дня Недели {week - 1}.
+                </div>
+              </div>
+            )}
 
             {DAYS.map((d, index) => {
               const allDaysStatuses = DAYS.map(dayInfo => {
@@ -1048,7 +1095,8 @@
                   onToggleSet={toggleSet} onToggleAll={toggleAll} onToggleWarmup={toggleWarmup}
                   bodyWeight={bodyWeightLog[week] ?? null} onBodyWeightChange={changeBodyWeight}
                   currentPhotoUrl={currentPhotoUrl} onPhotoPick={pickPhoto} photoBusy={photoBusy}
-                  onOpenInfo={setModalExercise} defaultOpen={shouldBeOpen} onPreviewImage={setPreviewImage} />
+                  onOpenInfo={setModalExercise} defaultOpen={shouldBeOpen} onPreviewImage={setPreviewImage}
+                  isLocked={isWeekLocked} />
               )
             })}
 
