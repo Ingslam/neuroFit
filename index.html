@@ -21,6 +21,8 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
+      user-select: none;
+      -webkit-user-select: none;
     }
     input::-webkit-outer-spin-button,
     input::-webkit-inner-spin-button {
@@ -40,12 +42,24 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useRef, useCallback } = React;
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
     // Expand Telegram WebApp view
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
+    }
+
+    function triggerHaptic(type = "light") {
+      try {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+          if (type === "success" || type === "warning" || type === "error") {
+            window.Telegram.WebApp.HapticFeedback.notificationOccurred(type);
+          } else {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred(type);
+          }
+        }
+      } catch (e) {}
     }
 
     // --- IndexedDB for Private Photo Storage ---
@@ -156,7 +170,7 @@
 
     function effectiveWeight(key, week, overrides) {
       const phase = getPhaseForWeek(week);
-      const list = overrides[key] || {};
+      const list = (overrides && overrides[key]) || {};
       const weeks = Object.keys(list).map(Number).filter((w) => w <= week);
       if (weeks.length === 0) return phase.weights[key];
       const overrideWeek = Math.max(...weeks);
@@ -331,22 +345,65 @@
     function PlateBadge({ week, weeksIntoPhase, phaseLength }) {
       const r = 92;
       return (
-        <div style={{ position: "relative", width: 130, height: 130, flexShrink: 0, margin: "0 auto" }}>
-          <svg viewBox="0 0 200 200" width="130" height="130">
+        <div style={{ position: "relative", width: 124, height: 124, flexShrink: 0, margin: "0 auto" }}>
+          <svg viewBox="0 0 200 200" width="124" height="124">
             <circle cx="100" cy="100" r={r} fill={C.accentDim} stroke={C.accent} strokeWidth="3" />
             <circle cx="100" cy="100" r={r - 14} fill="none" stroke={C.accent} strokeWidth="1.5" opacity="0.5" />
             <circle cx="100" cy="100" r={r - 28} fill="none" stroke={C.accent} strokeWidth="1.5" opacity="0.35" />
             <circle cx="100" cy="100" r="34" fill={C.bg} stroke={C.accent} strokeWidth="2" />
           </svg>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: C.text }}>
-            <span style={{ fontSize: 9, letterSpacing: "0.18em", color: C.textMuted, fontWeight: 700, marginBottom: -2 }}>НЕДЕЛЯ</span>
-            <span style={{ fontSize: 32, fontWeight: 900, lineHeight: 1 }}>{week}</span>
+            <span style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.textMuted, fontWeight: 700, marginBottom: -2 }}>НЕДЕЛЯ</span>
+            <span style={{ fontSize: 30, fontWeight: 900, lineHeight: 1 }}>{week}</span>
           </div>
           <div style={{ position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 5 }}>
             {Array.from({ length: phaseLength }, (_, i) => (
-              <span key={i} style={{ width: 8, height: 8, borderRadius: 9999, background: i < weeksIntoPhase ? C.accent : "transparent", border: `1.5px solid ${C.accent}` }} />
+              <span key={i} style={{ width: 7, height: 7, borderRadius: 9999, background: i < weeksIntoPhase ? C.accent : "transparent", border: `1.5px solid ${C.accent}` }} />
             ))}
           </div>
+        </div>
+      );
+    }
+
+    function WeekNavigationHeader({ week, maxWeeks = 21, onNudge, isCompleted }) {
+      return (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "8px 12px", marginBottom: 14 }}>
+          <button
+            onClick={() => { if (week > 1) { triggerHaptic("light"); onNudge(-1); } }}
+            disabled={week <= 1}
+            style={{
+              background: week <= 1 ? "transparent" : C.surfaceRaised,
+              border: `1px solid ${week <= 1 ? "transparent" : C.border}`,
+              borderRadius: 8, padding: "8px 14px", color: week <= 1 ? C.textFaint : C.text,
+              fontSize: 13, fontWeight: 700, cursor: week <= 1 ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", gap: 4, transition: "background 150ms"
+            }}>
+            ‹ Пред.
+          </button>
+
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: C.text }}>
+              Неделя {week} <span style={{ color: C.textMuted, fontWeight: 500, fontSize: 12 }}>из {maxWeeks}</span>
+            </div>
+            {isCompleted ? (
+              <div style={{ fontSize: 11, color: C.done, fontWeight: 700, marginTop: 1 }}>✓ Завершена</div>
+            ) : (
+              <div style={{ fontSize: 11, color: "#E67E22", fontWeight: 600, marginTop: 1 }}>В процессе</div>
+            )}
+          </div>
+
+          <button
+            onClick={() => { if (week < maxWeeks) { triggerHaptic("light"); onNudge(1); } }}
+            disabled={week >= maxWeeks}
+            style={{
+              background: week >= maxWeeks ? "transparent" : C.surfaceRaised,
+              border: `1px solid ${week >= maxWeeks ? "transparent" : C.border}`,
+              borderRadius: 8, padding: "8px 14px", color: week >= maxWeeks ? C.textFaint : C.text,
+              fontSize: 13, fontWeight: 700, cursor: week >= maxWeeks ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", gap: 4, transition: "background 150ms"
+            }}>
+            След. ›
+          </button>
         </div>
       );
     }
@@ -357,6 +414,7 @@
           width: size, height: size, borderRadius: 6, flexShrink: 0, cursor: "pointer",
           border: `2px solid ${checked ? C.done : C.textMuted}`, background: checked ? C.done : "transparent",
           display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+          transition: "background 150ms, border-color 150ms"
         }}>
           {checked && <svg width={size * 0.6} height={size * 0.6} viewBox="0 0 20 20" fill="none">
             <path d="M4 10.5L8 14.5L16 5.5" stroke={C.bg} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
@@ -394,10 +452,8 @@
     }
 
     function announceRestEnd() {
+      triggerHaptic("success");
       try {
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.notificationOccurred("success");
-        }
         if ("speechSynthesis" in window) {
           window.speechSynthesis.cancel();
           const phrase = new SpeechSynthesisUtterance("Let's go, go, go!");
@@ -438,8 +494,10 @@
                 <React.Fragment key={i}>
                   <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                     <CheckBox checked={c} onClick={() => {
+                      triggerHaptic("selection");
                       onToggleSet(ex.key, i);
                       if (!c) setActiveTimerIndex(i);
+                      else if (activeTimerIndex === i) setActiveTimerIndex(null);
                     }} size={22} />
                     <span style={{ fontSize: 11.5, color: C.textFaint }}>
                       {i + 1} <span style={{ opacity: 0.75 }}>({ex.reps.split(" ")[0]})</span>
@@ -465,7 +523,7 @@
           {photoDataUrl ? (
             <img src={photoDataUrl} alt={`Неделя ${week}`}
                  onClick={() => onPreviewImage(photoDataUrl)}
-                 style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 8, border: `1px solid ${C.accent}`, cursor: "pointer" }} />
+                 style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 8, border: `1.5px solid ${C.accent}`, cursor: "pointer" }} />
           ) : (
             <div style={{ width: 44, height: 44, borderRadius: 8, border: `1px dashed ${C.textFaint}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📷</div>
           )}
@@ -501,14 +559,14 @@
           transition: "border-color 200ms, box-shadow 200ms"
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: open ? 10 : 0, gap: 10 }}>
-            <button onClick={() => setOpen((value) => !value)} aria-expanded={open}
+            <button onClick={() => { triggerHaptic("selection"); setOpen((value) => !value); }} aria-expanded={open}
               style={{ flex: "1 1 auto", minWidth: 0, display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: C.text, padding: 0, textAlign: "left", cursor: "pointer" }}>
               <span style={{ width: 10, height: 10, borderRadius: 999, background: allDone ? C.done : day.color }} />
               <span style={{ fontSize: 18, fontWeight: 800, color: C.text }}>{day.label}</span>
               {allDone && <span style={{ fontSize: 11, color: C.done, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "rgba(76,154,107,0.2)" }}>Готово ✓</span>}
               <span aria-hidden="true" style={{ marginLeft: "auto", color: C.textMuted, fontSize: 18 }}>{open ? "⌃" : "⌄"}</span>
             </button>
-            <CheckBox checked={allDone} onClick={() => onToggleAll(day.key, !allDone)} size={28} />
+            <CheckBox checked={allDone} onClick={() => { triggerHaptic("medium"); onToggleAll(day.key, !allDone); }} size={28} />
           </div>
 
           {open && day.key === "mon" && (
@@ -570,7 +628,7 @@
 
       return (
         <div style={{ marginTop: 18, marginBottom: 18, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px" }}>
-          <button onClick={() => setOpen((v) => !v)} style={{ background: "none", border: "none", color: C.text, fontSize: 14.5, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, padding: 0, width: "100%", justifyContent: "space-between" }}>
+          <button onClick={() => { triggerHaptic("selection"); setOpen((v) => !v); }} style={{ background: "none", border: "none", color: C.text, fontSize: 14.5, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, padding: 0, width: "100%", justifyContent: "space-between" }}>
             <span>{hasComparison ? "📊 Прогресс: Было → Стало" : "🏁 Ваша начальная точка (Старт)"}</span>
             <span style={{ color: C.textMuted, fontSize: 12 }}>{open ? "свернуть ⌃" : "показать ⌄"}</span>
           </button>
@@ -591,7 +649,7 @@
                   {p1 && (
                     <div>
                       <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 6 }}>Стартовое фото (Неделя {firstPhotoWeek}) — <i>нажмите для увеличения</i>:</div>
-                      <div style={{ width: 110, height: 140, borderRadius: 10, overflow: "hidden", border: `1px solid ${C.accent}`, background: C.bg, cursor: "pointer" }}
+                      <div style={{ width: 110, height: 140, borderRadius: 10, overflow: "hidden", border: `1.5px solid ${C.accent}`, background: C.bg, cursor: "pointer" }}
                            onClick={() => onPreviewImage(p1)}>
                         <img src={p1} alt="Старт" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
@@ -601,7 +659,7 @@
               ) : (
                 <div>
                   <div style={{ fontSize: 12.5, color: C.textMuted, marginBottom: 12 }}>
-                    Закрыто недель: <b style={{ color: C.text }}>{completedCount}</b> из 21
+                    Закрыто недель: <b style={{ color: C.done }}>{completedCount}</b> из 21
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, fontSize: 13.5, background: C.surfaceRaised, padding: "10px 12px", borderRadius: 8 }}>
@@ -640,11 +698,11 @@
                       Фото: Неделя {firstPhotoWeek || 1} → Неделя {lastPhotoWeek || week} (нажмите для увеличения):
                     </div>
                     <div style={{ display: "flex", gap: 12 }}>
-                      <div style={{ flex: 1, height: 160, borderRadius: 10, overflow: "hidden", border: `1px solid ${C.border}`, background: C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center", cursor: p1 ? "pointer" : "default" }}
+                      <div style={{ flex: 1, height: 160, borderRadius: 10, overflow: "hidden", border: `1.5px solid ${C.border}`, background: C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center", cursor: p1 ? "pointer" : "default" }}
                            onClick={() => p1 && onPreviewImage(p1)}>
                         {p1 ? <img src={p1} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 11, color: C.textFaint }}>Старт</span>}
                       </div>
-                      <div style={{ flex: 1, height: 160, borderRadius: 10, overflow: "hidden", border: `1px solid ${C.border}`, background: C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center", cursor: p2 ? "pointer" : "default" }}
+                      <div style={{ flex: 1, height: 160, borderRadius: 10, overflow: "hidden", border: `1.5px solid ${C.border}`, background: C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center", cursor: p2 ? "pointer" : "default" }}
                            onClick={() => p2 && onPreviewImage(p2)}>
                         {p2 ? <img src={p2} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 11, color: C.textFaint }}>Сейчас</span>}
                       </div>
@@ -670,7 +728,7 @@
 
       return (
         <div style={{ marginTop: 18, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px" }}>
-          <button onClick={() => setOpen((v) => !v)} style={{ background: "none", border: "none", color: C.text, fontSize: 14.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: 0 }}>
+          <button onClick={() => { triggerHaptic("selection"); setOpen((v) => !v); }} style={{ background: "none", border: "none", color: C.text, fontSize: 14.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: 0 }}>
             <span>🗺️ План тренировок на 21 неделю</span>
             <span style={{ color: C.textMuted, fontSize: 12 }}>{open ? "свернуть ⌃" : "показать ⌄"}</span>
           </button>
@@ -719,7 +777,7 @@
     function App() {
       const [week, setWeek] = useState(1);
       const [overrides, setOverrides] = useState({});
-      const [checks, setChecks] = useState({});
+      const [checksByWeek, setChecksByWeek] = useState({});
       const [bodyWeightLog, setBodyWeightLog] = useState({});
       const [photoWeeks, setPhotoWeeks] = useState([]);
       const [completedWeeks, setCompletedWeeks] = useState({});
@@ -736,7 +794,8 @@
         (async () => {
           const saved = await loadStateStorage();
           if (saved) {
-            setWeek(saved.week || 1);
+            const initialWeek = saved.week || 1;
+            setWeek(initialWeek);
             
             let cleanOverrides = saved.overrides || {};
             if (!saved.schemaVersion || saved.schemaVersion < 4) {
@@ -744,12 +803,16 @@
             }
             setOverrides(cleanOverrides);
 
-            setChecks(saved.checks && Object.keys(saved.checks).length ? saved.checks : emptyChecksForWeek(getPhaseForWeek(saved.week || 1), saved.week || 1, cleanOverrides));
+            // Migration to checksByWeek: preserve existing checks for the saved week
+            let initialChecksByWeek = saved.checksByWeek || {};
+            if (saved.checks && Object.keys(saved.checks).length > 0 && !saved.checksByWeek) {
+              initialChecksByWeek[initialWeek] = saved.checks;
+            }
+            setChecksByWeek(initialChecksByWeek);
+
             setBodyWeightLog(saved.bodyWeightLog || {});
             setPhotoWeeks(saved.photoWeeks || []);
             setCompletedWeeks(saved.completedWeeks || {});
-          } else {
-            setChecks(emptyChecksForWeek(getPhaseForWeek(1), 1, {}));
           }
           setLoaded(true);
         })();
@@ -757,8 +820,8 @@
 
       useEffect(() => {
         if (!loaded) return;
-        saveStateStorage({ schemaVersion: 4, week, overrides, checks, bodyWeightLog, photoWeeks, completedWeeks });
-      }, [week, overrides, checks, bodyWeightLog, photoWeeks, completedWeeks, loaded]);
+        saveStateStorage({ schemaVersion: 5, week, overrides, checksByWeek, bodyWeightLog, photoWeeks, completedWeeks });
+      }, [week, overrides, checksByWeek, bodyWeightLog, photoWeeks, completedWeeks, loaded]);
 
       useEffect(() => {
         if (loaded) {
@@ -769,13 +832,19 @@
       const phase = getPhaseForWeek(week);
       const weeksIntoPhase = week - phase.weeks[0] + 1;
 
-      const allDaysDone = DAYS.every((d) => {
+      // Current week's checks from checksByWeek
+      const currentChecks = useMemo(() => {
+        if (checksByWeek[week]) return checksByWeek[week];
+        return emptyChecksForWeek(phase, week, overrides);
+      }, [checksByWeek, week, phase, overrides]);
+
+      const isCurrentWeekDone = useMemo(() => {
         const list = workoutFor(phase, week, overrides);
-        return checks[d.key] && list.every((ex) => checks[d.key][ex.key] && checks[d.key][ex.key].every(Boolean));
-      });
+        return DAYS.every((d) => currentChecks[d.key] && list.every((ex) => currentChecks[d.key][ex.key] && currentChecks[d.key][ex.key].every(Boolean)));
+      }, [phase, week, overrides, currentChecks]);
 
       useEffect(() => {
-        if (allDaysDone && !advancingRef.current && loaded) {
+        if (isCurrentWeekDone && !advancingRef.current && loaded) {
           advancingRef.current = true;
           setCompletedWeeks((previous) => ({ ...previous, [week]: new Date().toISOString() }));
           if (week >= 21) return;
@@ -792,18 +861,18 @@
           setJustAdvanced(true);
           const t = setTimeout(() => {
             setWeek(nextWeek);
-            setChecks(emptyChecksForWeek(nextPhase, nextWeek, overrides));
+            // We do NOT overwrite previous week's checks! We simply ensure nextWeek exists in checksByWeek
+            setChecksByWeek((prev) => {
+              if (prev[nextWeek]) return prev;
+              return { ...prev, [nextWeek]: emptyChecksForWeek(nextPhase, nextWeek, overrides) };
+            });
             
             if (increased) {
               setWeightIncreasedMsg(`💪 Неделя ${nextWeek}: веса увеличены! Проверьте новые значения.`);
-              if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-                window.Telegram.WebApp.HapticFeedback.notificationOccurred("warning");
-              }
+              triggerHaptic("warning");
             } else {
               setWeightIncreasedMsg("");
-              if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-                window.Telegram.WebApp.HapticFeedback.notificationOccurred("success");
-              }
+              triggerHaptic("success");
             }
             
             advancingRef.current = false;
@@ -811,26 +880,30 @@
           }, 1200);
           return () => clearTimeout(t);
         }
-      }, [allDaysDone, loaded, week, overrides]);
+      }, [isCurrentWeekDone, loaded, week, overrides]);
 
       const toggleSet = useCallback((dayKey, exKey, idx) => {
-        setChecks((prev) => {
+        setChecksByWeek((prev) => {
           const next = JSON.parse(JSON.stringify(prev));
-          if (!next[dayKey]) next[dayKey] = {};
-          if (!next[dayKey][exKey]) next[dayKey][exKey] = [];
-          next[dayKey][exKey][idx] = !next[dayKey][exKey][idx];
+          if (!next[week]) next[week] = emptyChecksForWeek(getPhaseForWeek(week), week, overrides);
+          if (!next[week][dayKey]) next[week][dayKey] = {};
+          if (!next[week][dayKey][exKey]) next[week][dayKey][exKey] = [];
+          next[week][dayKey][exKey][idx] = !next[week][dayKey][exKey][idx];
           return next;
         });
-      }, []);
+      }, [week, overrides]);
 
       const toggleAll = useCallback((dayKey, value) => {
-        setChecks((prev) => {
+        setChecksByWeek((prev) => {
           const next = JSON.parse(JSON.stringify(prev));
-          if (!next[dayKey]) return prev;
-          Object.keys(next[dayKey]).forEach((k) => { next[dayKey][k] = next[dayKey][k].map(() => value); });
+          if (!next[week]) next[week] = emptyChecksForWeek(getPhaseForWeek(week), week, overrides);
+          if (!next[week][dayKey]) return prev;
+          Object.keys(next[week][dayKey]).forEach((k) => {
+            next[week][dayKey][k] = next[week][dayKey][k].map(() => value);
+          });
           return next;
         });
-      }, []);
+      }, [week, overrides]);
 
       const changeBodyWeight = useCallback((val) => {
         setBodyWeightLog((prev) => { const next = { ...prev }; if (val == null) delete next[week]; else next[week] = val; return next; });
@@ -848,19 +921,25 @@
 
       const resetAll = () => {
         if (!window.confirm("Сбросить весь прогресс и начать с недели 1?")) return;
-        setWeek(1); setOverrides({}); setChecks(emptyChecksForWeek(getPhaseForWeek(1), 1, {})); setBodyWeightLog({}); setPhotoWeeks([]); setCurrentPhotoUrl(null); setCompletedWeeks({}); setWeightIncreasedMsg("");
+        setWeek(1); setOverrides({}); setChecksByWeek({}); setBodyWeightLog({}); setPhotoWeeks([]); setCurrentPhotoUrl(null); setCompletedWeeks({}); setWeightIncreasedMsg("");
       };
 
       const nudgeWeek = (delta) => {
-        const w = Math.max(1, week + delta);
-        setWeek(w); setChecks(emptyChecksForWeek(getPhaseForWeek(w), w, overrides)); setWeightIncreasedMsg("");
+        const w = Math.max(1, Math.min(21, week + delta));
+        setWeek(w);
+        setWeightIncreasedMsg("");
+        window.scrollTo({ top: 0, behavior: "smooth" });
       };
 
       if (!loaded) return <div style={{ background: C.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: C.textMuted, fontSize: 16 }}>Загрузка трекера…</div>;
 
       return (
-        <div style={{ background: C.bg, minHeight: "100vh", color: C.text, padding: "20px 14px 50px" }}>
+        <div style={{ background: C.bg, minHeight: "100vh", color: C.text, padding: "16px 14px 50px" }}>
           <div style={{ maxWidth: 600, margin: "0 auto" }}>
+            
+            {/* Top Week Switcher / Navigation Header */}
+            <WeekNavigationHeader week={week} maxWeeks={21} onNudge={nudgeWeek} isCompleted={isCurrentWeekDone || !!completedWeeks[week]} />
+
             <div style={{ textAlign: "center", marginBottom: 16 }}>
               <PlateBadge week={week} weeksIntoPhase={weeksIntoPhase} phaseLength={phase.weeks.length} />
               <div style={{ marginTop: 12 }}>
@@ -884,14 +963,14 @@
             {DAYS.map((d, index) => {
               const allDaysStatuses = DAYS.map(dayInfo => {
                 const l = workoutFor(phase, week, overrides);
-                return checks[dayInfo.key] && l.every((ex) => checks[dayInfo.key][ex.key] && checks[dayInfo.key][ex.key].every(Boolean));
+                return currentChecks[dayInfo.key] && l.every((ex) => currentChecks[dayInfo.key][ex.key] && currentChecks[dayInfo.key][ex.key].every(Boolean));
               });
               
               const firstUndoneIndex = allDaysStatuses.indexOf(false);
               const shouldBeOpen = firstUndoneIndex === -1 ? (index === 0) : (index === firstUndoneIndex);
 
               return (
-                <DayCard key={`${week}-${d.key}`} day={d} phase={phase} week={week} overrides={overrides} checksForDay={checks[d.key]}
+                <DayCard key={`${week}-${d.key}`} day={d} phase={phase} week={week} overrides={overrides} checksForDay={currentChecks[d.key]}
                   onToggleSet={toggleSet} onToggleAll={toggleAll}
                   bodyWeight={bodyWeightLog[week] ?? null} onBodyWeightChange={changeBodyWeight}
                   currentPhotoUrl={currentPhotoUrl} onPhotoPick={pickPhoto} photoBusy={photoBusy}
@@ -901,9 +980,17 @@
 
             <Roadmap currentWeek={week} overrides={overrides} />
 
-            <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${C.border}`, display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
-              <button onClick={() => nudgeWeek(-1)} style={ghostBtn}>← Пред. неделя</button>
-              <button onClick={() => nudgeWeek(1)} style={ghostBtn}>След. неделя →</button>
+            <div style={{ marginTop: 24, paddingTop: 16, borderTop: `1px solid ${C.border}`, display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+              <button onClick={() => nudgeWeek(-1)} disabled={week <= 1}
+                style={{ ...ghostBtn, opacity: week <= 1 ? 0.3 : 1, cursor: week <= 1 ? "not-allowed" : "pointer" }}>
+                ‹ Неделя {Math.max(1, week - 1)}
+              </button>
+              <span style={{ color: C.textFaint }}>•</span>
+              <button onClick={() => nudgeWeek(1)} disabled={week >= 21}
+                style={{ ...ghostBtn, opacity: week >= 21 ? 0.3 : 1, cursor: week >= 21 ? "not-allowed" : "pointer" }}>
+                Неделя {Math.min(21, week + 1)} ›
+              </button>
+              <span style={{ color: C.textFaint }}>•</span>
               <button onClick={resetAll} style={{ ...ghostBtn, color: C.accent }}>Начать заново</button>
             </div>
           </div>
@@ -915,7 +1002,7 @@
       );
     }
 
-    const ghostBtn = { background: "none", border: "none", color: "#A79D92", fontSize: 12.5, cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 3 };
+    const ghostBtn = { background: "none", border: "none", color: "#A79D92", fontSize: 12.5, cursor: "pointer", padding: "4px 6px", textDecoration: "underline", textUnderlineOffset: 3 };
 
     const root = ReactDOM.createRoot(document.getElementById("root"));
     root.render(<App />);
