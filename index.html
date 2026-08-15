@@ -195,31 +195,31 @@
 
     const EXERCISES = [
       { key: "squat", name: "Приседания с гантелями", reps: "12–15 повторов", type: "big", restSec: 90,
-        videoId: "aclHkTcP9U0",
+        gif: "./gifs/squat.gif",
         tip: "Держи гантели в опущенных руках или у плеч. Спина прямая, таз отводи назад, приседай до параллели бедра с полом.",
         discSetup: (w) => discSetup(w) },
       { key: "rdl", name: "Румынская тяга с гантелями", reps: "10–12 повторов", type: "big", restSec: 90,
-        videoId: "JCXUYuzwNrM",
+        gif: "./gifs/rdl.gif",
         tip: "Гантели скользят вдоль ног. Мягко согни колени, отводи таз назад и держи спину ровной; почувствуй растяжение задней поверхности бедра.",
         discSetup: (w) => discSetup(w) },
       { key: "row", name: "Тяга гантели в наклоне", reps: "10–12 повторов", type: "big", restSec: 90,
-        videoId: "ufhQhwyrx-4",
+        gif: "./gifs/row.gif",
         tip: "Опрись коленом и рукой на диван/стул. Корпус параллелен полу. Тяни гантель к поясу, ощущая сжатие лопатки.",
         discSetup: (w) => discSetup(w) },
       { key: "floor", name: "Жим гантелей лёжа на полу", reps: "10–12 повторов", type: "big", restSec: 90,
-        videoId: "T0Y3OBF1bNI",
+        gif: "./gifs/floor.gif",
         tip: "Лёжа на спине на коврике, ноги согнуты. Локти под углом 45° к корпусу, выжимай гантели вверх над грудью.",
         discSetup: (w) => discSetup(w) },
       { key: "ohp", name: "Жим гантелей стоя над головой", reps: "10–12 повторов", type: "big", restSec: 75,
-        videoId: "0JfYxMRsUCQ",
+        gif: "./gifs/ohp.gif",
         tip: "Стоя, пресс и ягодицы напряжены. Выжимай гантели вверх от плеч над головой, не прогибая поясницу.",
         discSetup: (w) => discSetup(w) },
       { key: "curl", name: "Сгибания на бицепс", reps: "12–15 повторов", type: "iso", restSec: 60,
-        videoId: "NHcg1wuGz84",
+        gif: "./gifs/curl.gif",
         tip: "Стоя, локти зафиксированы у туловища. Поднимай гантели плавным движением, разворачивая кисти к себе.",
         discSetup: (w) => discSetup(w) },
       { key: "tricep", name: "Разгибание на трицепс", reps: "12–15 повторов", type: "iso", restSec: 60,
-        videoId: "xbNm9fRoUTw",
+        gif: "./gifs/tricep.gif",
         tip: "Возьми 1 гантель ОБЕИМИ руками за блин, подняв над головой. Опускай за голову и полностью разгибай вверх.",
         discSetup: (w) => discSetup(w, true) },
     ];
@@ -233,11 +233,11 @@
     function workoutFor(phase, week, overrides) {
       const exercisesForWeek = week === 1 ? EXERCISES.filter((ex) => ex.key !== "rdl") : EXERCISES;
       const list = exercisesForWeek.map((ex) => ({
-        key: ex.key, name: ex.name, reps: ex.reps, restSec: ex.restSec, tip: ex.tip, discSetup: ex.discSetup, videoId: ex.videoId,
+        key: ex.key, name: ex.name, reps: ex.reps, restSec: ex.restSec, tip: ex.tip, discSetup: ex.discSetup, gif: ex.gif,
         weight: effectiveWeight(ex.key, week, overrides),
         sets: ex.type === "big" ? phase.sets.big : phase.sets.iso,
       }));
-      list.push({ key: "plank", name: "Планка", reps: `${phase.plankSec} сек`, restSec: 60, tip: "Планка на предплечьях. Корпус прямой как натянутая струна, пресс сжат.", videoId: "nEnNoRipej0", weight: null, sets: 3, isTime: true });
+      list.push({ key: "plank", name: "Планка", reps: `${phase.plankSec} сек`, restSec: 60, tip: "Планка на предплечьях. Корпус прямой как натянутая струна, пресс сжат.", gif: "./gifs/plank.gif", weight: null, sets: 3, isTime: true });
       return list;
     }
 
@@ -245,7 +245,7 @@
 
     function emptyChecksForWeek(phase, week, overrides) {
       const wk = workoutFor(phase, week, overrides);
-      const perDay = {};
+      const perDay = { warmup: false };
       wk.forEach((ex) => { perDay[ex.key] = Array.from({ length: ex.sets }, () => false); });
       const obj = {};
       DAYS.forEach((d) => { obj[d.key] = JSON.parse(JSON.stringify(perDay)); });
@@ -308,16 +308,12 @@
               <button onClick={onClose} style={{ background: "none", border: "none", color: C.textMuted, fontSize: 22, cursor: "pointer", padding: "0 4px" }}>✕</button>
             </div>
 
-            {exercise.videoId && (
-              <div style={{ width: "100%", aspectRatio: "16 / 9", background: "#110E0C", borderRadius: 12, overflow: "hidden", marginBottom: 14, border: `1px solid ${C.border}` }}>
-                <iframe
-                  title={`Техника: ${exercise.name}`}
-                  width="100%"
-                  height="100%"
-                  src={`https://www.youtube-nocookie.com/embed/${exercise.videoId}?rel=0&playsinline=1`}
-                  style={{ border: 0 }}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
+            {exercise.gif && (
+              <div style={{ width: "100%", minHeight: 220, background: "#110E0C", borderRadius: 12, overflow: "hidden", marginBottom: 14, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <img
+                  src={exercise.gif}
+                  alt={exercise.name}
+                  style={{ maxWidth: "100%", maxHeight: 260, objectFit: "contain" }}
                 />
               </div>
             )}
@@ -456,23 +452,71 @@
       try {
         if ("speechSynthesis" in window) {
           window.speechSynthesis.cancel();
-          const phrase = new SpeechSynthesisUtterance("Let's go, go, go!");
+          const phrase = new SpeechSynthesisUtterance("Let's goooooo!");
           phrase.lang = "en-US";
-          phrase.rate = 1.14;
+          phrase.rate = 0.92; // Slightly stretched and clear
           window.speechSynthesis.speak(phrase);
         }
       } catch (e) {}
     }
 
-    function ExerciseRow({ ex, checks, onToggleSet, onOpenInfo, activeTimerIndex, setActiveTimerIndex }) {
+    function WarmUpCard({ checked, onToggle }) {
+      const [showDetails, setShowDetails] = useState(false);
+
+      return (
+        <div style={{
+          background: checked ? "rgba(76,154,107,0.1)" : C.surfaceRaised,
+          border: `1px solid ${checked ? C.done : C.border}`,
+          borderRadius: 10, padding: "10px 12px", marginBottom: 12,
+          transition: "border-color 200ms"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => setShowDetails(!showDetails)}>
+              <span style={{ fontSize: 16 }}>🤸‍♂️</span>
+              <span style={{ fontSize: 13.5, fontWeight: 700, color: checked ? C.done : C.text }}>
+                Разминка (3–5 мин) {checked ? "✓" : ""}
+              </span>
+              <span style={{ fontSize: 11, color: C.textMuted, marginLeft: 2 }}>{showDetails ? "⌃" : "⌄"}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 11.5, color: C.textMuted }}>{checked ? "Готово" : "Отметить"}</span>
+              <CheckBox checked={checked} onClick={onToggle} size={22} />
+            </div>
+          </div>
+
+          {showDetails && (
+            <div style={{ marginTop: 10, paddingTop: 8, borderTop: `1px solid ${C.border}`, fontSize: 12.5, color: C.textMuted, lineHeight: 1.5 }}>
+              <div>• <b>Шея, плечи, локти:</b> плавные круговые вращения (по 10 раз в каждую сторону)</div>
+              <div>• <b>Таз и колени:</b> вращения тазом и мягкие сгибания коленей</div>
+              <div>• <b>Разогрев:</b> 10–12 легких приседаний без веса + махи руками</div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function ExerciseRow({ ex, checks, onToggleSet, onOpenInfo, activeTimerIndex, setActiveTimerIndex, isFocused }) {
       const words = ex.name.split(" ");
       const lastWord = words.pop();
       const mainText = words.join(" ");
 
       return (
-        <div style={{ padding: "12px 0", borderBottom: `1px solid ${C.border}` }}>
+        <div style={{
+          padding: "10px 8px",
+          marginBottom: 6,
+          borderRadius: 10,
+          background: isFocused ? "rgba(192,57,43,0.08)" : "transparent",
+          border: isFocused ? `1px solid rgba(192,57,43,0.4)` : `1px solid transparent`,
+          borderBottom: isFocused ? `1px solid rgba(192,57,43,0.4)` : `1px solid ${C.border}`,
+          transition: "background 200ms, border-color 200ms"
+        }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 8 }}>
             <div style={{ flex: "1 1 auto", minWidth: 0, fontSize: 14.5, color: C.text, fontWeight: 600, lineHeight: 1.3 }}>
+              {isFocused && (
+                <span style={{ fontSize: 10, fontWeight: 800, background: C.accent, color: "#fff", padding: "1px 5px", borderRadius: 4, marginRight: 6, verticalAlign: "middle", textTransform: "uppercase" }}>
+                  Текущее
+                </span>
+              )}
               {mainText}{mainText ? " " : ""}
               <span style={{ whiteSpace: "nowrap" }}>
                 {lastWord}
@@ -482,7 +526,7 @@
                 </button>
               </span>
             </div>
-            <div style={{ flexShrink: 0, marginTop: 2, fontSize: 13, color: C.textMuted, fontWeight: 700, fontFamily: "ui-monospace, monospace", whiteSpace: "nowrap" }}>
+            <div style={{ flexShrink: 0, marginTop: 2, fontSize: 13, color: isFocused ? C.accent : C.textMuted, fontWeight: 700, fontFamily: "ui-monospace, monospace", whiteSpace: "nowrap" }}>
               {ex.isTime || ex.weight == null ? "без веса" : `${ex.weight} кг`}
             </div>
           </div>
@@ -537,7 +581,7 @@
       );
     }
 
-    function DayCard({ day, phase, week, overrides, checksForDay, onToggleSet, onToggleAll,
+    function DayCard({ day, phase, week, overrides, checksForDay, onToggleSet, onToggleAll, onToggleWarmup,
                         bodyWeight, onBodyWeightChange, currentPhotoUrl, onPhotoPick, photoBusy, onOpenInfo, defaultOpen, onPreviewImage }) {
       const list = workoutFor(phase, week, overrides);
       const allDone = list.every((ex) => checksForDay && checksForDay[ex.key] && checksForDay[ex.key].every(Boolean));
@@ -549,6 +593,16 @@
       useEffect(() => {
         setOpen(defaultOpen);
       }, [defaultOpen]);
+
+      // Focus Mode: find the first exercise that has unchecked sets
+      const activeExerciseKey = useMemo(() => {
+        if (!checksForDay || allDone) return null;
+        for (const ex of list) {
+          const sets = checksForDay[ex.key] || [];
+          if (!sets.every(Boolean)) return ex.key;
+        }
+        return null;
+      }, [checksForDay, list, allDone]);
 
       return (
         <div style={{
@@ -568,6 +622,13 @@
             </button>
             <CheckBox checked={allDone} onClick={() => { triggerHaptic("medium"); onToggleAll(day.key, !allDone); }} size={28} />
           </div>
+
+          {open && (
+            <WarmUpCard
+              checked={checksForDay ? !!checksForDay.warmup : false}
+              onToggle={() => { triggerHaptic("selection"); onToggleWarmup(day.key); }}
+            />
+          )}
 
           {open && day.key === "mon" && (
             <div style={{ background: C.surfaceRaised, borderRadius: 10, padding: "10px 12px", marginBottom: 12, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -593,6 +654,7 @@
                 onOpenInfo={onOpenInfo}
                 activeTimerIndex={activeTimers[ex.key]}
                 setActiveTimerIndex={(idx) => setActiveTimers((prev) => ({ ...prev, [ex.key]: idx }))}
+                isFocused={activeExerciseKey === ex.key}
               />
             ))}
           </div>}
@@ -698,11 +760,11 @@
                       Фото: Неделя {firstPhotoWeek || 1} → Неделя {lastPhotoWeek || week} (нажмите для увеличения):
                     </div>
                     <div style={{ display: "flex", gap: 12 }}>
-                      <div style={{ flex: 1, height: 160, borderRadius: 10, overflow: "hidden", border: `1.5px solid ${C.border}`, background: C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center", cursor: p1 ? "pointer" : "default" }}
+                      <div style={{ flex: 1, height: 160, borderRadius: 10, overflow: "hidden", border: `1px solid ${C.border}`, background: C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center", cursor: p1 ? "pointer" : "default" }}
                            onClick={() => p1 && onPreviewImage(p1)}>
                         {p1 ? <img src={p1} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 11, color: C.textFaint }}>Старт</span>}
                       </div>
-                      <div style={{ flex: 1, height: 160, borderRadius: 10, overflow: "hidden", border: `1.5px solid ${C.border}`, background: C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center", cursor: p2 ? "pointer" : "default" }}
+                      <div style={{ flex: 1, height: 160, borderRadius: 10, overflow: "hidden", border: `1px solid ${C.border}`, background: C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center", cursor: p2 ? "pointer" : "default" }}
                            onClick={() => p2 && onPreviewImage(p2)}>
                         {p2 ? <img src={p2} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 11, color: C.textFaint }}>Сейчас</span>}
                       </div>
@@ -861,7 +923,6 @@
           setJustAdvanced(true);
           const t = setTimeout(() => {
             setWeek(nextWeek);
-            // We do NOT overwrite previous week's checks! We simply ensure nextWeek exists in checksByWeek
             setChecksByWeek((prev) => {
               if (prev[nextWeek]) return prev;
               return { ...prev, [nextWeek]: emptyChecksForWeek(nextPhase, nextWeek, overrides) };
@@ -893,13 +954,26 @@
         });
       }, [week, overrides]);
 
+      const toggleWarmup = useCallback((dayKey) => {
+        setChecksByWeek((prev) => {
+          const next = JSON.parse(JSON.stringify(prev));
+          if (!next[week]) next[week] = emptyChecksForWeek(getPhaseForWeek(week), week, overrides);
+          if (!next[week][dayKey]) next[week][dayKey] = {};
+          next[week][dayKey].warmup = !next[week][dayKey].warmup;
+          return next;
+        });
+      }, [week, overrides]);
+
       const toggleAll = useCallback((dayKey, value) => {
         setChecksByWeek((prev) => {
           const next = JSON.parse(JSON.stringify(prev));
           if (!next[week]) next[week] = emptyChecksForWeek(getPhaseForWeek(week), week, overrides);
           if (!next[week][dayKey]) return prev;
+          next[week][dayKey].warmup = value;
           Object.keys(next[week][dayKey]).forEach((k) => {
-            next[week][dayKey][k] = next[week][dayKey][k].map(() => value);
+            if (Array.isArray(next[week][dayKey][k])) {
+              next[week][dayKey][k] = next[week][dayKey][k].map(() => value);
+            }
           });
           return next;
         });
@@ -944,7 +1018,7 @@
               <PlateBadge week={week} weeksIntoPhase={weeksIntoPhase} phaseLength={phase.weeks.length} />
               <div style={{ marginTop: 12 }}>
                 <div style={{ fontSize: 12, letterSpacing: "0.14em", color: C.accent, fontWeight: 800, marginBottom: 4 }}>{phase.label.toUpperCase()}</div>
-                <div style={{ fontSize: 12.5, color: C.textMuted }}>Нажмите ⓘ для просмотра видео идеальной техники.</div>
+                <div style={{ fontSize: 12.5, color: C.textMuted }}>Нажмите ⓘ для просмотра анимации идеальной техники.</div>
                 {justAdvanced && (
                   <div style={{ marginTop: 10, padding: "8px 14px", background: "rgba(76,154,107,0.2)", border: `1px solid ${C.done}`, borderRadius: 8, fontSize: 13.5, color: C.done, fontWeight: 700 }}>
                     🎉 Отличная работа! Тренировка завершена. Переходим дальше…
@@ -971,7 +1045,7 @@
 
               return (
                 <DayCard key={`${week}-${d.key}`} day={d} phase={phase} week={week} overrides={overrides} checksForDay={currentChecks[d.key]}
-                  onToggleSet={toggleSet} onToggleAll={toggleAll}
+                  onToggleSet={toggleSet} onToggleAll={toggleAll} onToggleWarmup={toggleWarmup}
                   bodyWeight={bodyWeightLog[week] ?? null} onBodyWeightChange={changeBodyWeight}
                   currentPhotoUrl={currentPhotoUrl} onPhotoPick={pickPhoto} photoBusy={photoBusy}
                   onOpenInfo={setModalExercise} defaultOpen={shouldBeOpen} onPreviewImage={setPreviewImage} />
