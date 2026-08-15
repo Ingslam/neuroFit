@@ -231,12 +231,22 @@
     ];
 
     function workoutFor(phase, week, overrides) {
+      const list = [];
+      // 1. Warm-up is always the first exercise row
+      list.push({
+        key: "warmup", name: "Суставная разминка", reps: "3–5 мин", restSec: 0,
+        tip: "Плавные круговые вращения шеей, плечами, локтями, тазом и коленями (по 10 раз в каждую сторону) + 10 легких приседаний без веса для разогрева суставов.",
+        gif: null, weight: null, sets: 1, isTime: true
+      });
+
       const exercisesForWeek = week === 1 ? EXERCISES.filter((ex) => ex.key !== "rdl") : EXERCISES;
-      const list = exercisesForWeek.map((ex) => ({
-        key: ex.key, name: ex.name, reps: ex.reps, restSec: ex.restSec, tip: ex.tip, discSetup: ex.discSetup, gif: ex.gif,
-        weight: effectiveWeight(ex.key, week, overrides),
-        sets: ex.type === "big" ? phase.sets.big : phase.sets.iso,
-      }));
+      exercisesForWeek.forEach((ex) => {
+        list.push({
+          key: ex.key, name: ex.name, reps: ex.reps, restSec: ex.restSec, tip: ex.tip, discSetup: ex.discSetup, gif: ex.gif,
+          weight: effectiveWeight(ex.key, week, overrides),
+          sets: ex.type === "big" ? phase.sets.big : phase.sets.iso,
+        });
+      });
       list.push({ key: "plank", name: "Планка", reps: `${phase.plankSec} сек`, restSec: 60, tip: "Планка на предплечьях. Корпус прямой как натянутая струна, пресс сжат.", gif: "./gifs/plank.gif", weight: null, sets: 3, isTime: true });
       return list;
     }
@@ -245,7 +255,7 @@
 
     function emptyChecksForWeek(phase, week, overrides) {
       const wk = workoutFor(phase, week, overrides);
-      const perDay = { warmup: false };
+      const perDay = {};
       wk.forEach((ex) => { perDay[ex.key] = Array.from({ length: ex.sets }, () => false); });
       const obj = {};
       DAYS.forEach((d) => { obj[d.key] = JSON.parse(JSON.stringify(perDay)); });
@@ -281,6 +291,26 @@
       blueFocus: "#2980B9"
     };
 
+    function ChevronIcon({ open, size = 18, color = "#A79D92" }) {
+      return (
+        <svg
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          fill="none"
+          style={{
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+            display: "inline-block",
+            verticalAlign: "middle",
+            flexShrink: 0
+          }}
+        >
+          <path d="M6 9L12 15L18 9" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    }
+
     function ImageModal({ src, onClose }) {
       if (!src) return null;
       return (
@@ -290,7 +320,6 @@
                onClick={(e) => e.stopPropagation()}>
             <button onClick={onClose} style={{ position: "absolute", top: -40, right: 0, background: "none", border: "none", color: "#fff", fontSize: 28, cursor: "pointer", padding: 4 }}>✕</button>
             <img src={src} alt="Просмотр фото" style={{ maxWidth: "100%", maxHeight: "82vh", borderRadius: 12, objectFit: "contain", boxShadow: "0 8px 30px rgba(0,0,0,0.8)" }} />
-            <div style={{ marginTop: 10, fontSize: 13, color: C.textMuted }}>Нажмите в любом месте, чтобы закрыть</div>
           </div>
         </div>
       );
@@ -328,9 +357,11 @@
               📌 <b>Техника выполнения:</b><br />
               {exercise.tip || "Следите за прямой спиной и плавным темпом движения."}
             </div>
-            <div style={{ fontSize: 12.5, color: C.textFaint }}>
-              ⏱ Рекомендуемый отдых между подходами: <b>{exercise.restSec || 60} сек</b>
-            </div>
+            {exercise.restSec > 0 && (
+              <div style={{ fontSize: 12.5, color: C.textFaint }}>
+                ⏱ Рекомендуемый отдых между подходами: <b>{exercise.restSec} сек</b>
+              </div>
+            )}
             <button onClick={onClose} style={{ width: "100%", marginTop: 16, padding: "12px 0", background: C.accent, color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
               Понятно
             </button>
@@ -339,36 +370,63 @@
       );
     }
 
-    function WeekHeroBadge({ week, phase, currentChecks, overrides }) {
+    function PlateBadge({ week, phase, currentChecks, overrides }) {
       const list = workoutFor(phase, week, overrides);
       
       const dayStatuses = DAYS.map((d) => {
         const checksForDay = currentChecks[d.key];
-        const isDone = checksForDay && list.every((ex) => checksForDay[ex.key] && checksForDay[ex.key].every(Boolean));
+        const isDone = checksForDay && list.every((ex) => {
+          const arr = Array.isArray(checksForDay[ex.key]) ? checksForDay[ex.key] : [Boolean(checksForDay[ex.key])];
+          return arr.every(Boolean);
+        });
         return { label: d.label, isDone };
       });
 
       return (
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: "16px 18px", marginBottom: 16, textAlign: "center", boxShadow: "0 4px 20px rgba(0,0,0,0.25)" }}>
-          <div style={{ fontSize: 11.5, letterSpacing: "0.14em", color: C.accent, fontWeight: 800, textTransform: "uppercase", marginBottom: 4 }}>
-            ЭТАП {phase.id}: {phase.label}
-          </div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: C.text, lineHeight: 1.2, marginBottom: 10 }}>
-            Неделя {week}
+        <div style={{ textAlign: "center", margin: "4px auto 14px" }}>
+          {/* Competition-style Barbell Plate Disc */}
+          <div style={{ position: "relative", width: 114, height: 114, margin: "0 auto" }}>
+            <svg viewBox="0 0 200 200" width="114" height="114">
+              <defs>
+                <radialGradient id="plateGrad" cx="45%" cy="40%" r="60%">
+                  <stop offset="0%" stopColor="#2D231E" />
+                  <stop offset="70%" stopColor="#1B1512" />
+                  <stop offset="100%" stopColor="#110E0C" />
+                </radialGradient>
+              </defs>
+              {/* Outer Plate Lip */}
+              <circle cx="100" cy="100" r="94" fill="url(#plateGrad)" stroke={C.accent} strokeWidth="3.5" />
+              {/* Machined concentric grooves */}
+              <circle cx="100" cy="100" r="80" fill="none" stroke={C.accent} strokeWidth="1.5" opacity="0.4" />
+              <circle cx="100" cy="100" r="66" fill="none" stroke={C.accent} strokeWidth="1.2" opacity="0.25" />
+              {/* Center Bore Ring */}
+              <circle cx="100" cy="100" r="32" fill="#14110E" stroke={C.accent} strokeWidth="2.5" />
+              {/* Crisp text */}
+              <text x="100" y="81" textAnchor="middle" fill="#A79D92" fontSize="9.5" fontWeight="800" letterSpacing="3">НЕДЕЛЯ</text>
+              <text x="100" y="125" textAnchor="middle" fill="#F2EDE7" fontSize="33" fontWeight="900">{week}</text>
+            </svg>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+          {/* Minimalist Phase Label & Clean 3-Day Indicators */}
+          <div style={{ fontSize: 11.5, letterSpacing: "0.14em", color: C.accent, fontWeight: 800, textTransform: "uppercase", marginTop: 8, marginBottom: 6 }}>
+            ЭТАП {phase.id}: {phase.label}
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "center", gap: 8, alignItems: "center" }}>
             {dayStatuses.map((ds, i) => (
-              <div key={i} style={{
-                display: "inline-flex", alignItems: "center", gap: 5,
-                background: ds.isDone ? "rgba(76,154,107,0.18)" : C.surfaceRaised,
-                border: `1px solid ${ds.isDone ? C.done : C.border}`,
-                borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 700,
-                color: ds.isDone ? C.done : C.textMuted
-              }}>
-                <span>{ds.isDone ? "✓" : "○"}</span>
-                <span>{ds.label}</span>
-              </div>
+              <span
+                key={i}
+                title={ds.label}
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 9999,
+                  background: ds.isDone ? C.done : "transparent",
+                  border: `1.5px solid ${ds.isDone ? C.done : C.border}`,
+                  boxShadow: ds.isDone ? "0 0 8px rgba(76,154,107,0.7)" : "none",
+                  transition: "all 200ms"
+                }}
+              />
             ))}
           </div>
         </div>
@@ -476,45 +534,14 @@
       } catch (e) {}
     }
 
-    function WarmUpCard({ checked, onToggle }) {
-      const [showDetails, setShowDetails] = useState(false);
-
-      return (
-        <div style={{
-          background: checked ? "rgba(76,154,107,0.1)" : C.surfaceRaised,
-          border: `1px solid ${checked ? C.done : C.border}`,
-          borderRadius: 10, padding: "10px 12px", marginBottom: 12,
-          transition: "border-color 200ms"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => setShowDetails(!showDetails)}>
-              <span style={{ fontSize: 16 }}>🤸‍♂️</span>
-              <span style={{ fontSize: 13.5, fontWeight: 700, color: checked ? C.done : C.text }}>
-                Разминка (3–5 мин) {checked ? "✓" : ""}
-              </span>
-              <span style={{ fontSize: 11, color: C.textMuted, marginLeft: 2 }}>{showDetails ? "⌃" : "⌄"}</span>
-            </div>
-            <CheckBox checked={checked} onClick={onToggle} size={22} />
-          </div>
-
-          {showDetails && (
-            <div style={{ marginTop: 10, paddingTop: 8, borderTop: `1px solid ${C.border}`, fontSize: 12.5, color: C.textMuted, lineHeight: 1.5 }}>
-              <div>• <b>Шея, плечи, локти:</b> плавные круговые вращения (по 10 раз в каждую сторону)</div>
-              <div>• <b>Таз и колени:</b> вращения тазом и мягкие сгибания коленей</div>
-              <div>• <b>Разогрев:</b> 10–12 легких приседаний без веса + махи руками</div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
     function ExerciseRow({ ex, checks, onToggleSet, onOpenInfo, activeTimerIndex, setActiveTimerIndex }) {
+      const setList = Array.isArray(checks) ? checks : [Boolean(checks)];
       const words = ex.name.split(" ");
       const lastWord = words.pop();
       const mainText = words.join(" ");
 
       // Focused only when at least 1 set is checked, but not all sets completed yet
-      const isFocused = checks.some(Boolean) && !checks.every(Boolean);
+      const isFocused = setList.some(Boolean) && !setList.every(Boolean);
 
       return (
         <div style={{
@@ -537,29 +564,31 @@
               </span>
             </div>
             <div style={{ flexShrink: 0, marginTop: 2, fontSize: 13, color: isFocused ? C.blueFocus : C.textMuted, fontWeight: 700, fontFamily: "ui-monospace, monospace", whiteSpace: "nowrap" }}>
-              {ex.isTime || ex.weight == null ? "без веса" : `${ex.weight} кг`}
+              {ex.isTime || ex.weight == null ? (ex.key === "warmup" ? "3–5 мин" : "без веса") : `${ex.weight} кг`}
             </div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 12, color: C.textMuted, fontWeight: 600 }}>Подходы:</span>
-              {checks.map((c, i) => (
+              <span style={{ fontSize: 12, color: C.textMuted, fontWeight: 600 }}>
+                {ex.key === "warmup" ? "Разминка:" : "Подходы:"}
+              </span>
+              {setList.map((c, i) => (
                 <React.Fragment key={i}>
                   <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                     <CheckBox checked={c} onClick={() => {
                       triggerHaptic("selection");
                       onToggleSet(ex.key, i);
-                      if (!c) setActiveTimerIndex(i);
+                      if (!c && ex.restSec > 0) setActiveTimerIndex(i);
                       else if (activeTimerIndex === i) setActiveTimerIndex(null);
                     }} size={22} />
                     <span style={{ fontSize: 11.5, color: C.textFaint }}>
-                      {i + 1} <span style={{ opacity: 0.75 }}>({ex.reps.split(" ")[0]})</span>
+                      {ex.key === "warmup" ? "Выполнено" : `${i + 1} (${ex.reps.split(" ")[0]})`}
                     </span>
                   </div>
 
-                  {c && activeTimerIndex === i && (
-                    <RestTimer durationSec={ex.restSec || 60} isLast={i === checks.length - 1} onFinish={() => { setActiveTimerIndex(null); announceRestEnd(); }} />
+                  {c && activeTimerIndex === i && ex.restSec > 0 && (
+                    <RestTimer durationSec={ex.restSec || 60} isLast={i === setList.length - 1} onFinish={() => { setActiveTimerIndex(null); announceRestEnd(); }} />
                   )}
                 </React.Fragment>
               ))}
@@ -609,10 +638,13 @@
       );
     }
 
-    function DayCard({ day, phase, week, overrides, checksForDay, onToggleSet, onToggleAll, onToggleWarmup,
+    function DayCard({ day, phase, week, overrides, checksForDay, onToggleSet, onToggleAll,
                         bodyWeight, onBodyWeightChange, currentPhotoUrl, onPhotoPick, photoBusy, onOpenInfo, defaultOpen, onPreviewImage, isLocked }) {
       const list = workoutFor(phase, week, overrides);
-      const allDone = list.every((ex) => checksForDay && checksForDay[ex.key] && checksForDay[ex.key].every(Boolean));
+      const allDone = list.every((ex) => {
+        const arr = checksForDay && checksForDay[ex.key];
+        return Array.isArray(arr) ? arr.every(Boolean) : Boolean(arr);
+      });
       const showPhoto = day.key === "mon" && isPhotoWeek(week);
       
       const [activeTimers, setActiveTimers] = useState({});
@@ -638,17 +670,12 @@
               <span style={{ width: 10, height: 10, borderRadius: 999, background: allDone ? C.done : day.color }} />
               <span style={{ fontSize: 18, fontWeight: 800, color: C.text }}>{day.label}</span>
               {allDone && <span style={{ fontSize: 11, color: C.done, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "rgba(76,154,107,0.2)" }}>Готово ✓</span>}
-              <span aria-hidden="true" style={{ marginLeft: "auto", color: C.textMuted, fontSize: 18 }}>{open ? "⌃" : "⌄"}</span>
+              <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center" }}>
+                <ChevronIcon open={open} size={20} color={C.textMuted} />
+              </span>
             </button>
             <CheckBox checked={allDone} onClick={() => { triggerHaptic("medium"); onToggleAll(day.key, !allDone); }} size={28} />
           </div>
-
-          {open && (
-            <WarmUpCard
-              checked={checksForDay ? !!checksForDay.warmup : false}
-              onToggle={() => { triggerHaptic("selection"); onToggleWarmup(day.key); }}
-            />
-          )}
 
           {open && day.key === "mon" && (
             <div style={{ background: C.surfaceRaised, borderRadius: 10, padding: "10px 12px", marginBottom: 12, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -711,7 +738,7 @@
         <div style={{ marginTop: 18, marginBottom: 18, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px" }}>
           <button onClick={() => { triggerHaptic("selection"); setOpen((v) => !v); }} style={{ background: "none", border: "none", color: C.text, fontSize: 14.5, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, padding: 0, width: "100%", justifyContent: "space-between" }}>
             <span>{hasComparison ? "📊 Прогресс: Было → Стало" : "🏁 Ваша начальная точка (Старт)"}</span>
-            <span style={{ color: C.textMuted, fontSize: 12 }}>{open ? "свернуть ⌃" : "показать ⌄"}</span>
+            <ChevronIcon open={open} size={18} color={C.textMuted} />
           </button>
 
           {open && (
@@ -729,7 +756,7 @@
 
                   {p1 && (
                     <div>
-                      <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 6 }}>Стартовое фото (Неделя {firstPhotoWeek}) — <i>нажмите для увеличения</i>:</div>
+                      <div style={{ fontSize: 12, color: C.textMuted, marginBottom: 6 }}>Стартовое фото (Неделя {firstPhotoWeek}):</div>
                       <div style={{ width: 110, height: 140, borderRadius: 10, overflow: "hidden", border: `1.5px solid ${C.accent}`, background: C.bg, cursor: "pointer" }}
                            onClick={() => onPreviewImage(p1)}>
                         <img src={p1} alt="Старт" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -776,7 +803,7 @@
 
                   <div>
                     <div style={{ fontSize: 12.5, color: C.textMuted, marginBottom: 8 }}>
-                      Фото: Неделя {firstPhotoWeek || 1} → Неделя {lastPhotoWeek || week} (нажмите для увеличения):
+                      Фото: Неделя {firstPhotoWeek || 1} → Неделя {lastPhotoWeek || week}:
                     </div>
                     <div style={{ display: "flex", gap: 12 }}>
                       <div style={{ flex: 1, height: 160, borderRadius: 10, overflow: "hidden", border: `1px solid ${C.border}`, background: C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center", cursor: p1 ? "pointer" : "default" }}
@@ -811,7 +838,7 @@
         <div style={{ marginTop: 18, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px" }}>
           <button onClick={() => { triggerHaptic("selection"); setOpen((v) => !v); }} style={{ background: "none", border: "none", color: C.text, fontSize: 14.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: 0 }}>
             <span>🗺️ План тренировок на 21 неделю</span>
-            <span style={{ color: C.textMuted, fontSize: 12 }}>{open ? "свернуть ⌃" : "показать ⌄"}</span>
+            <ChevronIcon open={open} size={18} color={C.textMuted} />
           </button>
 
           {open && (
@@ -923,7 +950,10 @@
         const list = workoutFor(ph, targetWeek, overrides);
         const wChecks = checksData[targetWeek];
         if (!wChecks) return false;
-        return DAYS.every((d) => wChecks[d.key] && list.every((ex) => wChecks[d.key][ex.key] && wChecks[d.key][ex.key].every(Boolean)));
+        return DAYS.every((d) => wChecks[d.key] && list.every((ex) => {
+          const arr = Array.isArray(wChecks[d.key][ex.key]) ? wChecks[d.key][ex.key] : [Boolean(wChecks[d.key][ex.key])];
+          return arr.every(Boolean);
+        }));
       }, [overrides, checksByWeek]);
 
       const isCurrentWeekDone = useMemo(() => {
@@ -981,7 +1011,13 @@
           const next = JSON.parse(JSON.stringify(prev));
           if (!next[week]) next[week] = emptyChecksForWeek(getPhaseForWeek(week), week, overrides);
           if (!next[week][dayKey]) next[week][dayKey] = {};
-          if (!next[week][dayKey][exKey]) next[week][dayKey][exKey] = [];
+          
+          // Ensure array format for sets
+          if (!Array.isArray(next[week][dayKey][exKey])) {
+            const curVal = Boolean(next[week][dayKey][exKey]);
+            next[week][dayKey][exKey] = [curVal];
+          }
+
           next[week][dayKey][exKey][idx] = !next[week][dayKey][exKey][idx];
           
           handlePotentialCompletion(next, week);
@@ -989,26 +1025,15 @@
         });
       }, [week, overrides, handlePotentialCompletion]);
 
-      const toggleWarmup = useCallback((dayKey) => {
-        setChecksByWeek((prev) => {
-          const next = JSON.parse(JSON.stringify(prev));
-          if (!next[week]) next[week] = emptyChecksForWeek(getPhaseForWeek(week), week, overrides);
-          if (!next[week][dayKey]) next[week][dayKey] = {};
-          next[week][dayKey].warmup = !next[week][dayKey].warmup;
-          return next;
-        });
-      }, [week, overrides]);
-
       const toggleAll = useCallback((dayKey, value) => {
         setChecksByWeek((prev) => {
           const next = JSON.parse(JSON.stringify(prev));
           if (!next[week]) next[week] = emptyChecksForWeek(getPhaseForWeek(week), week, overrides);
           if (!next[week][dayKey]) return prev;
-          next[week][dayKey].warmup = value;
-          Object.keys(next[week][dayKey]).forEach((k) => {
-            if (Array.isArray(next[week][dayKey][k])) {
-              next[week][dayKey][k] = next[week][dayKey][k].map(() => value);
-            }
+          
+          const wkList = workoutFor(getPhaseForWeek(week), week, overrides);
+          wkList.forEach((ex) => {
+            next[week][dayKey][ex.key] = Array.from({ length: ex.sets }, () => value);
           });
 
           handlePotentialCompletion(next, week);
@@ -1051,8 +1076,8 @@
             {/* Top Week Switcher / Navigation Header */}
             <WeekNavigationHeader week={week} maxWeeks={21} onNudge={nudgeWeek} isCompleted={isCurrentWeekDone || !!completedWeeks[week]} isLocked={isWeekLocked} />
 
-            {/* Modern Week Hero Badge (replaces bulky PlateBadge) */}
-            <WeekHeroBadge week={week} phase={phase} currentChecks={currentChecks} overrides={overrides} />
+            {/* Authentic Circular Barbell Plate Hero Badge */}
+            <PlateBadge week={week} phase={phase} currentChecks={currentChecks} overrides={overrides} />
 
             <div style={{ textAlign: "center", marginBottom: 16 }}>
               <div style={{ fontSize: 12.5, color: C.textMuted }}>Нажмите ⓘ на упражнении для просмотра анимации техники.</div>
@@ -1084,7 +1109,10 @@
             {DAYS.map((d, index) => {
               const allDaysStatuses = DAYS.map(dayInfo => {
                 const l = workoutFor(phase, week, overrides);
-                return currentChecks[dayInfo.key] && l.every((ex) => currentChecks[dayInfo.key][ex.key] && currentChecks[dayInfo.key][ex.key].every(Boolean));
+                return currentChecks[dayInfo.key] && l.every((ex) => {
+                  const arr = Array.isArray(currentChecks[dayInfo.key][ex.key]) ? currentChecks[dayInfo.key][ex.key] : [Boolean(currentChecks[dayInfo.key][ex.key])];
+                  return arr.every(Boolean);
+                });
               });
               
               const firstUndoneIndex = allDaysStatuses.indexOf(false);
@@ -1092,7 +1120,7 @@
 
               return (
                 <DayCard key={`${week}-${d.key}`} day={d} phase={phase} week={week} overrides={overrides} checksForDay={currentChecks[d.key]}
-                  onToggleSet={toggleSet} onToggleAll={toggleAll} onToggleWarmup={toggleWarmup}
+                  onToggleSet={toggleSet} onToggleAll={toggleAll}
                   bodyWeight={bodyWeightLog[week] ?? null} onBodyWeightChange={changeBodyWeight}
                   currentPhotoUrl={currentPhotoUrl} onPhotoPick={pickPhoto} photoBusy={photoBusy}
                   onOpenInfo={setModalExercise} defaultOpen={shouldBeOpen} onPreviewImage={setPreviewImage}
