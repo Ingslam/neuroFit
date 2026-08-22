@@ -8,7 +8,110 @@
 
   <!-- Ловушка ошибок: любая ошибка JS видна на экране, а не «пустой фон» -->
   <script>
-    
+    (function () {
+      function show(msg) {
+        try {
+          var d = document.createElement("div");
+          d.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99999;background:#6E1414;color:#fff;font:12px/1.5 ui-monospace,monospace;padding:10px 12px;white-space:pre-wrap;word-break:break-all;max-height:45vh;overflow:auto";
+          d.textContent = msg;
+          if (document.body) document.body.appendChild(d);
+          else document.addEventListener("DOMContentLoaded", function () { document.body.appendChild(d); });
+        } catch (e) {}
+      }
+      window.addEventListener("error", function (e) {
+        var t = e.target;
+        if (t && (t.tagName === "SCRIPT" || t.tagName === "LINK" || t.tagName === "IMG")) {
+          var src = t.src || t.href || "(без адреса)";
+          show("⚠ НЕ ЗАГРУЗИЛСЯ файл <" + t.tagName + ">:\n" + src + "\n\nЭто сетевая проблема или файл отсутствует.");
+          return;
+        }
+        var m = "⚠ " + (e.message || "Ошибка") +
+                (e.filename ? "\n" + String(e.filename).split("/").pop() + ":" + e.lineno : "") +
+                (e.error && e.error.stack ? "\n" + String(e.error.stack).split("\n").slice(0, 3).join("\n") : "");
+        show(m);
+      }, true);
+      window.addEventListener("unhandledrejection", function (e) {
+        show("⚠ promise: " + (e.reason && e.reason.message ? e.reason.message : e.reason));
+      });
+      window.__nfBooted = false;
+      setTimeout(function () {
+        if (!window.__nfBooted) {
+          var r = document.getElementById("root");
+          var empty = !r || r.childElementCount === 0;
+          if (empty) show("⚠ Приложение не запустилось за 10 сек.\nПроверь интернет (CDN мог не загрузиться) и обнови страницу.\nЕсли ошибка была выше — пришли скриншот.");
+        }
+      }, 10000);
+    })();
+  </script>
+
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- React (jsdelivr — надёжнее и с CORS; JSX уже скомпилирован, Babel не нужен) -->
+  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+
+  <!-- Реальные SVG тела для онбординга. Если файла нет — рисуется заглушка. -->
+  <script src="./bodies.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #15120F;
+      color: #F2EDE7;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+    button, input { font: inherit; }
+
+    /* ===== Анимации переходов день/неделя ===== */
+    @keyframes nfSlam{
+      0%{transform:scale(2.1) rotate(14deg);opacity:0}
+      55%{transform:scale(.94) rotate(-3deg);opacity:1}
+      100%{transform:scale(1) rotate(0)}
+    }
+    @keyframes nfRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+    @keyframes nfFall{to{transform:translateY(440px) rotate(680deg);opacity:.15}}
+    @keyframes nfPulse{
+      0%,100%{box-shadow:0 0 0 rgba(41,128,185,0)}
+      40%{box-shadow:0 0 26px rgba(41,128,185,.55)}
+    }
+    @keyframes nfFlash{
+      0%{box-shadow:0 0 0 rgba(76,154,107,0)}
+      35%{box-shadow:0 0 28px rgba(76,154,107,.5)}
+      100%{box-shadow:0 0 20px rgba(76,154,107,.32)}
+    }
+    @keyframes nfPop{0%{transform:scale(.5)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .nf-slam{animation:nfSlam .55s cubic-bezier(.2,1.3,.35,1) both}
+    .nf-rise{animation:nfRise .45s both}
+    .nf-pulse{animation:nfPulse 1.4s ease}
+    .nf-flash{animation:nfFlash .6s ease both}
+    .nf-pop{animation:nfPop .4s cubic-bezier(.2,1.8,.4,1)}
+
+    /* Карта тела */
+    #bodymap-wrap svg{color:#7D7266}
+    #bodymap-wrap [id="body"] path,#bodymap-wrap [id="body"] line{stroke:#87796B}
+    #bodymap-wrap svg g[id]{cursor:pointer;transition:filter .15s}
+    #bodymap-wrap svg g[id]:hover{filter:brightness(1.35)}
+    #bodymap-wrap .hidden{display:none}
+    .bmcell svg{width:124px;height:auto;display:block;margin:0 auto}
+    .chipsbar{display:flex;flex-wrap:wrap;gap:8px}
+    @media (max-width: 360px) {
+      body { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+<script>
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
 var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
@@ -2015,4 +2118,3 @@ try {
 </script>
 </body>
 </html>
-
