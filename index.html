@@ -6,6 +6,39 @@
   <meta name="theme-color" content="#15120F">
   <title>NeuroFit Трекер v2</title>
 
+  <!-- Ловушка ошибок: любая ошибка JS видна на экране, а не «пустой фон» -->
+  <script>
+    (function () {
+      function show(msg) {
+        try {
+          var d = document.createElement("div");
+          d.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99999;background:#6E1414;color:#fff;font:12px/1.5 ui-monospace,monospace;padding:10px 12px;white-space:pre-wrap;word-break:break-all;max-height:45vh;overflow:auto";
+          d.textContent = msg;
+          if (document.body) document.body.appendChild(d);
+          else document.addEventListener("DOMContentLoaded", function () { document.body.appendChild(d); });
+        } catch (e) {}
+      }
+      window.addEventListener("error", function (e) {
+        var m = "⚠ " + (e.message || "Ошибка загрузки");
+        if (e.filename) m += "\n" + String(e.filename).split("/").pop() + ":" + e.lineno;
+        show(m);
+      });
+      window.addEventListener("unhandledrejection", function (e) {
+        show("⚠ promise: " + (e.reason && e.reason.message ? e.reason.message : e.reason));
+      });
+      // Если через 10 секунд приложение так и не отрисовалось — подсказка
+      window.__nfBooted = false;
+      setTimeout(function () {
+        if (!window.__nfBooted) {
+          var r = document.getElementById("root");
+          var empty = !r || r.childElementCount === 0;
+          if (empty) show("⚠ Приложение не запустилось за 10 сек.\nПроверь интернет (unpkg.com может быть недоступен) и обнови страницу.\nЕсли ошибка была выше — пришли скриншот.");
+        }
+      }, 10000);
+    })();
+  </script>
+
+
   <!-- Telegram Web App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -14,7 +47,7 @@
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 
-  <!-- Реальные SVG тела для онбординга (загрузи bodies.js рядом с этим файлом).
+  <!-- Реальные SVG тела для онбординга
        Если файла нет — карта рисует встроенную заглушку, ничего не ломается. -->
   <script src="./bodies.js"></script>
 
@@ -1725,7 +1758,7 @@
               </div>
             )}
 
-            {step === 4 && (
+            {step === 5 && (
               <div style={{ paddingTop: 10 }}>
                 <div style={{ fontSize: 19, fontWeight: 900 }}>Собираю программу…</div>
                 <ul style={{ listStyle: "none", marginTop: 18, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -2320,7 +2353,14 @@
     }
 
     const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<App />);
+    try {
+      root.render(<App />);
+      window.__nfBooted = true;
+    } catch (e) {
+      document.getElementById("root").innerHTML =
+        '<div style="color:#fff;font:13px monospace;padding:20px;white-space:pre-wrap">⚠ Ошибка отрисовки:\n' +
+        String(e && e.message ? e.message : e).replace(/</g, "&lt;") + "</div>";
+    }
   </script>
 </body>
 </html>
