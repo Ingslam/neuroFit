@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
@@ -8,121 +8,26 @@
 
   <!-- Ловушка ошибок: любая ошибка JS видна на экране, а не «пустой фон» -->
   <script>
-    (function () {
-      function show(msg) {
-        try {
-          var d = document.createElement("div");
-          d.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99999;background:#6E1414;color:#fff;font:12px/1.5 ui-monospace,monospace;padding:10px 12px;white-space:pre-wrap;word-break:break-all;max-height:45vh;overflow:auto";
-          d.textContent = msg;
-          if (document.body) document.body.appendChild(d);
-          else document.addEventListener("DOMContentLoaded", function () { document.body.appendChild(d); });
-        } catch (e) {}
-      }
-      window.addEventListener("error", function (e) {
-        // Ошибка загрузки файла (script/link/img) — называем файл честно
-        var t = e.target;
-        if (t && (t.tagName === "SCRIPT" || t.tagName === "LINK" || t.tagName === "IMG")) {
-          var src = t.src || t.href || "(без адреса)";
-          show("⚠ НЕ ЗАГРУЗИЛСЯ файл <" + t.tagName + ">:\n" + src +
-               "\n\nЭто сетевая проблема или файл отсутствует.");
-          return;
-        }
-        var m = "⚠ " + (e.message || "Ошибка") +
-                (e.filename ? "\n" + String(e.filename).split("/").pop() + ":" + e.lineno : "") +
-                (e.error && e.error.stack ? "\n" + String(e.error.stack).split("\n").slice(0, 3).join("\n") : "");
-        show(m);
-      }, true);
-      window.addEventListener("unhandledrejection", function (e) {
-        show("⚠ promise: " + (e.reason && e.reason.message ? e.reason.message : e.reason));
-      });
-      // Если через 10 секунд приложение так и не отрисовалось — подсказка
-      window.__nfBooted = false;
-      setTimeout(function () {
-        if (!window.__nfBooted) {
-          var r = document.getElementById("root");
-          var empty = !r || r.childElementCount === 0;
-          if (empty) show("⚠ Приложение не запустилось за 10 сек.\nПроверь интернет (CDN мог не загрузиться) и обнови страницу.\nЕсли ошибка была выше — пришли скриншот.");
-        }
-      }, 10000);
-    })();
-  </script>
-
-
-  <!-- Telegram Web App SDK -->
-  <script crossorigin="anonymous" src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- React (jsdelivr — надёжнее и с CORS; JSX уже скомпилирован, Babel не нужен) -->
-  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
-  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-
-  <!-- Реальные SVG тела для онбординга (загрузи bodies.js рядом с этим файлом).
-       Если файла нет — карта рисует встроенную заглушку, ничего не ломается. -->
-  <script src="./bodies.js"></script>
-
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background-color: #15120F;
-      color: #F2EDE7;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-      user-select: none;
-      -webkit-user-select: none;
+    
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
     }
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    input[type=number] { -moz-appearance: textfield; }
-    button, input { font: inherit; }
-
-    /* ===== Анимации переходов день/неделя ===== */
-    @keyframes nfSlam{
-      0%{transform:scale(2.1) rotate(14deg);opacity:0}
-      55%{transform:scale(.94) rotate(-3deg);opacity:1}
-      100%{transform:scale(1) rotate(0)}
-    }
-    @keyframes nfRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-    @keyframes nfFall{to{transform:translateY(440px) rotate(680deg);opacity:.15}}
-    @keyframes nfPulse{
-      0%,100%{box-shadow:0 0 0 rgba(41,128,185,0)}
-      40%{box-shadow:0 0 26px rgba(41,128,185,.55)}
-    }
-    @keyframes nfFlash{
-      0%{box-shadow:0 0 0 rgba(76,154,107,0)}
-      35%{box-shadow:0 0 28px rgba(76,154,107,.5)}
-      100%{box-shadow:0 0 20px rgba(76,154,107,.32)}
-    }
-    @keyframes nfPop{0%{transform:scale(.5)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
-    @keyframes nfToastIn{
-      0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}
-      14%{opacity:1;transform:translate(-50%,-50%) scale(1)}
-      86%{opacity:1;transform:translate(-50%,-50%) scale(1)}
-      100%{opacity:0;transform:translate(-50%,-50%) scale(.95)}
-    }
-    .nf-slam{animation:nfSlam .55s cubic-bezier(.2,1.3,.35,1) both}
-    .nf-rise{animation:nfRise .45s both}
-    .nf-pulse{animation:nfPulse 1.4s ease}
-    .nf-flash{animation:nfFlash .6s ease both}
-    .nf-pop{animation:nfPop .4s cubic-bezier(.2,1.8,.4,1)}
-    .nf-toast{animation:nfToastIn 1.7s ease both}
-
-    /* Карта тела */
-    #bodymap-wrap svg{color:#7D7266}
-    #bodymap-wrap [id="body"] path,#bodymap-wrap [id="body"] line{stroke:#87796B}
-    #bodymap-wrap svg g[id]{cursor:pointer;transition:filter .15s}
-    #bodymap-wrap svg g[id]:hover{filter:brightness(1.35)}
-    #bodymap-wrap .hidden{display:none}
-    .bmcell svg{width:124px;height:auto;display:block;margin:0 auto}
-    .chipsbar{display:flex;flex-wrap:wrap;gap:8px}
-    @media (max-width: 360px) {
-      body { font-size: 15px; }
-    }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-
-  <script>
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (tg) {
@@ -570,6 +475,7 @@ const DAY_META = {
   tue: { color: "#16A085", rgba: "22,160,133" },
   wed: { color: "#8E44AD", rgba: "142,68,173" },
   thu: { color: "#2980B9", rgba: "41,128,185" },
+  fri: { color: "#2980B9", rgba: "41,128,185" },
   sat: { color: "#E67E22", rgba: "230,126,34" }
 };
 const DAY_SEQS = { 2: ["mon", "wed"], 3: ["mon", "wed", "fri"], 4: ["mon", "tue", "thu", "sat"] };
@@ -1156,18 +1062,15 @@ function DayCard({
     }
   }, [animStage]);
   const lockedStyle = isLocked || readOnly ? { opacity: 0.55, pointerEvents: "none" } : {};
-  return /* @__PURE__ */ React.createElement("div", { style: {
+  return /* @__PURE__ */ React.createElement("div", { style: __spreadValues(__spreadValues(__spreadValues({
     background: day.bgGrad || C.surface,
     border: `1.5px solid ${allDone ? C.done : day.color}`,
     borderRadius: 14,
     padding: "16px 16px",
     marginBottom: 16,
     boxShadow: animStage === "flash" ? void 0 : allDone ? "0 4px 14px rgba(76,154,107,0.15)" : "none",
-    transition: "border-color 200ms, box-shadow 300ms, opacity 200ms",
-    ...animStage === "flash" ? { animation: "nfFlash .6s ease both" } : {},
-    ...animStage === "opening" ? { animation: "nfPulse 1.4s ease" } : {},
-    ...lockedStyle
-  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: open ? 10 : 0, gap: 10 } }, /* @__PURE__ */ React.createElement(
+    transition: "border-color 200ms, box-shadow 300ms, opacity 200ms"
+  }, animStage === "flash" ? { animation: "nfFlash .6s ease both" } : {}), animStage === "opening" ? { animation: "nfPulse 1.4s ease" } : {}), lockedStyle) }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: open ? 10 : 0, gap: 10 } }, /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => {
@@ -1219,7 +1122,7 @@ function DayCard({
       step: "0.1",
       inputMode: "decimal",
       placeholder: "\u2014",
-      value: bodyWeight ?? "",
+      value: bodyWeight != null ? bodyWeight : "",
       onChange: (e) => onBodyWeightChange(e.target.value === "" ? null : parseFloat(e.target.value)),
       style: { width: 64, fontSize: 13, padding: "5px 6px", borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, color: C.text, textAlign: "center" }
     }
@@ -1240,7 +1143,7 @@ function DayCard({
       onToggleSet: (k, i) => onToggleSet(day.key, k, i),
       onOpenInfo,
       activeTimerIndex: activeTimers[ex.key],
-      setActiveTimerIndex: (idx) => setActiveTimers((prev) => ({ ...prev, [ex.key]: idx }))
+      setActiveTimerIndex: (idx) => setActiveTimers((prev) => __spreadProps(__spreadValues({}, prev), { [ex.key]: idx }))
     }
   ))), open && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, fontSize: 12, color: C.textMuted, lineHeight: 1.4 } }, "\u{1F964} \u041F\u043E\u0441\u043B\u0435 \u0442\u0440\u0435\u043D\u0438\u0440\u043E\u0432\u043A\u0438: ", /* @__PURE__ */ React.createElement("span", { style: { color: C.accent, fontWeight: 700 } }, "\u043F\u0440\u043E\u0442\u0435\u0438\u043D + \u043A\u0440\u0435\u0430\u0442\u0438\u043D (3\u20135 \u0433)"))));
 }
@@ -1612,14 +1515,14 @@ function Onboarding({ onDone }) {
   ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: C.textFaint } }, "\u043A\u0433")), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, display: "flex", flexDirection: "column", gap: 6 } }, PLATE_TYPES.map((p) => /* @__PURE__ */ React.createElement("div", { key: p, style: { display: "flex", alignItems: "center", gap: 10, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "7px 12px" } }, /* @__PURE__ */ React.createElement("span", { style: { flex: 1, fontSize: 13.5, fontWeight: 700 } }, "\u0414\u0438\u0441\u043A\u0438 \u043F\u043E ", p, " \u043A\u0433"), /* @__PURE__ */ React.createElement(
     "button",
     {
-      onClick: () => setDbPlates((s) => ({ ...s, [p]: Math.max(0, (parseInt(s[p]) || 0) - 1) })),
+      onClick: () => setDbPlates((s) => __spreadProps(__spreadValues({}, s), { [p]: Math.max(0, (parseInt(s[p]) || 0) - 1) })),
       style: { width: 30, height: 30, borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, cursor: "pointer", fontWeight: 800 }
     },
     "\u2212"
   ), /* @__PURE__ */ React.createElement("span", { style: { width: 26, textAlign: "center", fontSize: 15, fontWeight: 900, fontFamily: "ui-monospace, monospace" } }, dbPlates[p] || 0), /* @__PURE__ */ React.createElement(
     "button",
     {
-      onClick: () => setDbPlates((s) => ({ ...s, [p]: Math.min(10, (parseInt(s[p]) || 0) + 1) })),
+      onClick: () => setDbPlates((s) => __spreadProps(__spreadValues({}, s), { [p]: Math.min(10, (parseInt(s[p]) || 0) + 1) })),
       style: { width: 30, height: 30, borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, cursor: "pointer", fontWeight: 800 }
     },
     "+"
@@ -1748,7 +1651,7 @@ function App() {
         if (saved.checks && Object.keys(saved.checks).length > 0 && !saved.checksByWeek) {
           initialChecksByWeek[initialWeek] = saved.checks;
         }
-        const cw = { ...saved.completedWeeks || {} };
+        const cw = __spreadValues({}, saved.completedWeeks || {});
         Object.keys(cw).forEach((wKey) => {
           const wNum = Number(wKey);
           const ph = getPhaseForWeek(wNum);
@@ -1861,13 +1764,13 @@ function App() {
     const fromPhase = getPhaseForWeek(fromWeek);
     const nextPhase = getPhaseForWeek(nextWeek);
     const increased = nextPhase.weights.squat > fromPhase.weights.squat || nextPhase.weights.ohp > fromPhase.weights.ohp;
-    setCompletedWeeks((prev) => ({ ...prev, [fromWeek]: (/* @__PURE__ */ new Date()).toISOString() }));
+    setCompletedWeeks((prev) => __spreadProps(__spreadValues({}, prev), { [fromWeek]: (/* @__PURE__ */ new Date()).toISOString() }));
     setWeekOverlay({ from: fromWeek, to: nextWeek, increased });
     later(() => {
       setWeek(nextWeek);
       setChecksByWeek((prev) => {
         if (prev[nextWeek]) return prev;
-        return { ...prev, [nextWeek]: emptyChecksForWeek(getPhaseForWeek(nextWeek), nextWeek, overrides, plan) };
+        return __spreadProps(__spreadValues({}, prev), { [nextWeek]: emptyChecksForWeek(getPhaseForWeek(nextWeek), nextWeek, overrides, plan) });
       });
       setWeightIncreasedMsg(increased ? `\u{1F4AA} \u041D\u0435\u0434\u0435\u043B\u044F ${nextWeek}: \u0432\u0435\u0441\u0430 \u0443\u0432\u0435\u043B\u0438\u0447\u0435\u043D\u044B! \u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u043D\u043E\u0432\u044B\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F.` : "");
       triggerHaptic(increased ? "warning" : "success");
@@ -1909,7 +1812,7 @@ function App() {
     }
     while (nextWeekChecks[dayKey][exKey].length <= idx) nextWeekChecks[dayKey][exKey].push(false);
     nextWeekChecks[dayKey][exKey][idx] = !nextWeekChecks[dayKey][exKey][idx];
-    const nextChecksByWeek = { ...checksByWeek, [week]: nextWeekChecks };
+    const nextChecksByWeek = __spreadProps(__spreadValues({}, checksByWeek), { [week]: nextWeekChecks });
     setChecksByWeek(nextChecksByWeek);
     const afterDone = dayIsDone(dayKey, nextWeekChecks);
     const afterWeekDone = checkIsWeekDone(week, nextChecksByWeek);
@@ -1931,7 +1834,7 @@ function App() {
     (dayLists[di] || []).forEach((ex) => {
       nextWeekChecks[dayKey][ex.key] = Array.from({ length: ex.sets }, () => value);
     });
-    const nextChecksByWeek = { ...checksByWeek, [week]: nextWeekChecks };
+    const nextChecksByWeek = __spreadProps(__spreadValues({}, checksByWeek), { [week]: nextWeekChecks });
     setChecksByWeek(nextChecksByWeek);
     const afterDone = dayIsDone(dayKey, nextWeekChecks);
     const afterWeekDone = checkIsWeekDone(week, nextChecksByWeek);
@@ -1945,7 +1848,7 @@ function App() {
   }, [week, checksByWeek, phase, overrides, plan, dayLists, daysArr, currentChecks, dayIsDone, checkIsWeekDone, interactionsDisabled, startDayAnim, commitAdvance, len]);
   const changeBodyWeight = useCallback((val) => {
     setBodyWeightLog((prev) => {
-      const next = { ...prev };
+      const next = __spreadValues({}, prev);
       if (val == null) delete next[week];
       else next[week] = val;
       return next;
@@ -1988,7 +1891,7 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const finishOnboarding = useCallback(({ profile: p, plan: pl }) => {
-    setProfile({ ...p, sound: true });
+    setProfile(__spreadProps(__spreadValues({}, p), { sound: true }));
     setPlan(pl);
     setWeek(1);
     setChecksByWeek({ 1: emptyChecksForWeek(getPhaseForWeek(1), 1, {}, pl) });
@@ -2013,6 +1916,7 @@ function App() {
   const firstUndoneIndex = allDaysStatuses.indexOf(false);
   const toastDayIdx = dayAnim && dayAnim.stage === "toast" ? dayAnim.idx : null;
   return /* @__PURE__ */ React.createElement("div", { style: { background: C.bg, minHeight: "100vh", color: C.text, paddingBottom: "calc(96px + env(safe-area-inset-bottom))" } }, tab === "train" && /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 600, margin: "0 auto", padding: "16px 14px 0" } }, /* @__PURE__ */ React.createElement(WeekNavigationHeader, { week, maxWeeks: len, onNudge: nudgeWeek, isCompleted: isCurrentWeekDone, isLocked: isWeekLocked }), /* @__PURE__ */ React.createElement(PlateBadge, { week, phase, currentChecks, overrides, plan, completedCount }), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: C.textMuted } }, "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u24D8 \u043D\u0430 \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u0438 \u0434\u043B\u044F \u043F\u0440\u043E\u0441\u043C\u043E\u0442\u0440\u0430 \u0430\u043D\u0438\u043C\u0430\u0446\u0438\u0438 \u0442\u0435\u0445\u043D\u0438\u043A\u0438."), weightIncreasedMsg && !weekOverlay && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, padding: "8px 14px", background: "rgba(192,57,43,0.15)", border: `1px solid ${C.accent}`, borderRadius: 8, fontSize: 13.5, color: "#fff", fontWeight: 700 } }, weightIncreasedMsg), readOnlyView && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, padding: "8px 14px", background: "rgba(76,154,107,0.12)", border: `1px solid ${C.done}`, borderRadius: 8, fontSize: 13, color: C.done, fontWeight: 700 } }, "\u{1F512} \u042D\u0442\u0430 \u043D\u0435\u0434\u0435\u043B\u044F \u0443\u0436\u0435 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0430 \u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u0430 \u0442\u043E\u043B\u044C\u043A\u043E \u0434\u043B\u044F \u043F\u0440\u043E\u0441\u043C\u043E\u0442\u0440\u0430")), isWeekLocked && /* @__PURE__ */ React.createElement("div", { style: { background: "rgba(230,126,34,0.12)", border: "1px solid #E67E22", borderRadius: 12, padding: "14px 16px", marginBottom: 16, textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, marginBottom: 4 } }, "\u{1F512}"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 800, color: "#E67E22", marginBottom: 2 } }, "\u041D\u0435\u0434\u0435\u043B\u044F \u0437\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D\u0430"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: C.textMuted } }, "\u0427\u0442\u043E\u0431\u044B \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u0442\u0440\u0435\u043D\u0438\u0440\u043E\u0432\u043A\u0438 \u041D\u0435\u0434\u0435\u043B\u0438 ", week, ", \u0441\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u0435 \u0432\u0441\u0435 ", daysArr.length, " \u0442\u0440\u0435\u043D\u0438\u0440\u043E\u0432\u043A\u0438 \u041D\u0435\u0434\u0435\u043B\u0438 ", week - 1, ".")), daysArr.map((d, index) => {
+    var _a;
     const shouldBeOpen = firstUndoneIndex === -1 ? index === 0 : index === firstUndoneIndex;
     let animStage = null;
     if (dayAnim) {
@@ -2033,7 +1937,7 @@ function App() {
         onToggleSet: toggleSet,
         onToggleAll: toggleAll,
         dayExList: dayLists[index],
-        bodyWeight: bodyWeightLog[week] ?? null,
+        bodyWeight: (_a = bodyWeightLog[week]) != null ? _a : null,
         onBodyWeightChange: changeBodyWeight,
         currentPhotoUrl,
         onPhotoPick: pickPhoto,
@@ -2087,7 +1991,7 @@ function App() {
       completedCount,
       workoutsDone,
       soundOn,
-      setSoundOn: (v) => setProfile((p) => ({ ...p, sound: v })),
+      setSoundOn: (v) => setProfile((p) => __spreadProps(__spreadValues({}, p), { sound: v })),
       onRequestReset: () => setConfirmReset(true),
       len
     }
@@ -2146,6 +2050,7 @@ try {
 </script>
 </body>
 </html>
+
 
 
 
