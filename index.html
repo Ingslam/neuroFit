@@ -195,21 +195,21 @@
     /* ================= Программа: фазы и веса (без изменений) ================= */
     const BASE_PHASES = [
       { id: 1, label: "Старт и техника", weeks: [1, 2], sets: { big: 2, iso: 2 },
-        weights: { squat: 7.5, rdl: 7.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 5 }, plankSec: 25 },
+        weights: { squat: 7.5, rdl: 7.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 5, calf: 10 }, plankSec: 25 },
       { id: 2, label: "Полный объём", weeks: [3, 4, 5], sets: { big: 3, iso: 2 },
-        weights: { squat: 7.5, rdl: 7.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 5 }, plankSec: 30 },
+        weights: { squat: 7.5, rdl: 7.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 5, calf: 10 }, plankSec: 30 },
       { id: 3, label: "Первое повышение", weeks: [6, 7, 8], sets: { big: 3, iso: 2 },
-        weights: { squat: 8.5, rdl: 8.5, row: 8.5, floor: 8.5, ohp: 6, curl: 6, tricep: 6 }, plankSec: 40 },
+        weights: { squat: 8.5, rdl: 8.5, row: 8.5, floor: 8.5, ohp: 6, curl: 6, tricep: 6, calf: 11 }, plankSec: 40 },
       { id: 4, label: "Силовой блок", weeks: [9, 10, 11], sets: { big: 3, iso: 2 },
-        weights: { squat: 11, rdl: 11, row: 11, floor: 11, ohp: 6, curl: 6, tricep: 6 }, plankSec: 45 },
+        weights: { squat: 11, rdl: 11, row: 11, floor: 11, ohp: 6, curl: 6, tricep: 6, calf: 14 }, plankSec: 45 },
       { id: 5, label: "Разгрузочная неделя", weeks: [12], sets: { big: 2, iso: 1 },
-        weights: { squat: 7.5, rdl: 7.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 5 }, plankSec: 30 },
+        weights: { squat: 7.5, rdl: 7.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 5, calf: 10 }, plankSec: 30 },
       { id: 6, label: "Рост после разгрузки", weeks: [13, 14, 15], sets: { big: 3, iso: 2 },
-        weights: { squat: 11, rdl: 11, row: 11, floor: 11, ohp: 7.5, curl: 7.5, tricep: 7.5 }, plankSec: 50 },
+        weights: { squat: 11, rdl: 11, row: 11, floor: 11, ohp: 7.5, curl: 7.5, tricep: 7.5, calf: 14 }, plankSec: 50 },
       { id: 7, label: "Закрепляем силу", weeks: [16, 17, 18], sets: { big: 3, iso: 2 },
-        weights: { squat: 12, rdl: 12, row: 12, floor: 12, ohp: 7.5, curl: 7.5, tricep: 7.5 }, plankSec: 55 },
+        weights: { squat: 12, rdl: 12, row: 12, floor: 12, ohp: 7.5, curl: 7.5, tricep: 7.5, calf: 15 }, plankSec: 55 },
       { id: 8, label: "Финальный блок", weeks: [19, 20, 21], sets: { big: 3, iso: 2 },
-        weights: { squat: 12, rdl: 12, row: 12, floor: 12, ohp: 8.5, curl: 8.5, tricep: 8.5 }, plankSec: 60 },
+        weights: { squat: 12, rdl: 12, row: 12, floor: 12, ohp: 8.5, curl: 8.5, tricep: 8.5, calf: 15 }, plankSec: 60 },
     ];
 
     function round1(v) { return Math.round(v * 10) / 10; }
@@ -259,7 +259,7 @@
         gif: "./gifs/row.gif",
         tip: "Опрись коленом и рукой на диван/стул. Корпус параллелен полу. Тяни гантель к поясу, ощущая сжатие лопатки.",
         discSetup: (w) => discSetup(w) },
-      { key: "floor", name: "Жим гантелей лёжа на полу", reps: "10–12 повторов", type: "big", restSec: 90,
+      { key: "floor", name: "Жим гантелей лёжа", reps: "10–12 повторов", type: "big", restSec: 90,
         gif: "./gifs/floor.gif",
         tip: "Лёжа на спине на коврике, ноги согнуты. Локти под углом 45° к корпусу, выжимай гантели вверх над грудью.",
         discSetup: (w) => discSetup(w) },
@@ -275,6 +275,10 @@
         gif: "./gifs/tricep.gif",
         tip: "Возьми 1 гантель ОБЕИМИ руками за блин, подняв над головой. Опускай за голову и полностью разгибай вверх.",
         discSetup: (w) => discSetup(w, true) },
+      { key: "calf", name: "Подъёмы на носки с гантелями", reps: "15–20 повторов", type: "iso", restSec: 45,
+        gif: "./gifs/calf.gif",
+        tip: "Стоя, гантели в опущенных руках. Поднимайся на носки максимально высоко, задержись сверху на секунду и медленно опускайся вниз.",
+        discSetup: (w) => discSetup(w) },
     ];
     const EX_BY_KEY = {};
     EXERCISES.forEach((e) => { EX_BY_KEY[e.key] = e; });
@@ -285,13 +289,16 @@
       row: ["lats", "traps-middle", "rear-shoulders", "biceps"],
       floor: ["chest", "front-shoulders", "triceps"],
       ohp: ["front-shoulders", "triceps"],
-      curl: ["biceps"],
+      curl: ["biceps", "forearms"],
       tricep: ["triceps"],
+      calf: ["calves"],
     };
 
+    const EX_SHORT = { squat: "присед", rdl: "рум. тяга", row: "тяга", floor: "жим лёжа", ohp: "жим вверх", curl: "бицепс", tricep: "трицепс", calf: "икры" };
+
     /* ================= Движок весов под блины пользователя ================= */
-    const DB_STARTERS = { squat: 7.5, rdl: 7.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 5 };
-    const PLATE_TYPES = [1.25, 2.5, 5];
+    const DB_STARTERS = { squat: 7.5, rdl: 7.5, row: 7.5, floor: 7.5, ohp: 5, curl: 5, tricep: 5, calf: 10 };
+    const PLATE_TYPES = [0.5, 1.25, 2, 2.5, 5];
 
     function pluralRu(n, forms) {
       const m10 = n % 10, m100 = n % 100;
@@ -386,26 +393,38 @@
       return `${a}–${b}`;
     }
 
-    /* План = набор упражнений + (опц.) движок гантелей + длительность */
+    /* План = набор упражнений + (опц.) движок гантелей + длительность.
+       Правило: ничего не выбрано → полное тело. Выбрано мало (1 упр.) →
+       добираем 1 базовое для баланса и честно помечаем это в narrowAdded. */
     function buildPlan(selectedMuscles, dbEngine) {
       const sel = new Set(selectedMuscles || []);
-      let keys;
-      if (sel.size === 0) keys = EXERCISES.map((e) => e.key);
-      else {
-        keys = EXERCISES.filter((e) => MUSCLE_OF_EX[e.key].some((m) => sel.has(m))).map((e) => e.key);
-        if (keys.length < 4) keys = EXERCISES.map((e) => e.key);
+      let keys = sel.size
+        ? EXERCISES.filter((e) => MUSCLE_OF_EX[e.key].some((m) => sel.has(m))).map((e) => e.key)
+        : [];
+      let narrowAdded = [];
+      if (keys.length === 0) {
+        keys = EXERCISES.map((e) => e.key);
+      } else if (keys.length < 2) {
+        for (const k of ["squat", "row", "floor", "ohp"]) {
+          if (keys.length >= 2) break;
+          if (!keys.includes(k)) { keys.push(k); narrowAdded.push(k); }
+        }
       }
-      const plan = { keys, weeks: 21 };
+      const plan = { keys, weeks: 21, narrowAdded };
       if (dbEngine) plan.db = dbEngine;
       return plan;
     }
     /* Длина программы — параметр плана (для будущих программ другой длины) */
     function progLen(plan) { return (plan && plan.weeks) || 21; }
 
+    /* Классический набор без новых упражнений — чтобы старые планы (plan=null)
+       не менялись при пополнении базы */
+    const LEGACY_KEYS = ["squat", "rdl", "row", "floor", "ohp", "curl", "tricep"];
     function planExercises(plan) {
-      if (!plan || !plan.keys || !plan.keys.length) return EXERCISES;
+      if (!plan || !plan.keys || !plan.keys.length)
+        return EXERCISES.filter((e) => LEGACY_KEYS.includes(e.key));
       const list = plan.keys.map((k) => EX_BY_KEY[k]).filter(Boolean);
-      return list.length ? list : EXERCISES;
+      return list.length ? list : EXERCISES.filter((e) => LEGACY_KEYS.includes(e.key));
     }
 
     const DAYS = [
@@ -414,7 +433,34 @@
       { key: "fri", label: "День 3", color: "#2980B9", bgGrad: "linear-gradient(135deg, rgba(41,128,185,0.15) 0%, rgba(29,24,21,1) 100%)" },
     ];
 
-    function workoutFor(phase, week, overrides, plan) {
+    /* ================= Дни недели: 2 / 3 / 4 тренировки =================
+       3 дня — золотой стандарт новичка (всё тело Пн/Ср/Пт).
+       2 дня — всё тело для плотного графика.
+       4 дня — верх/низ: Пн(низ) Вт(верх) Чт(низ) Сб(верх). */
+    const DAY_META = {
+      mon: { color: "#C0392B", rgba: "192,57,43" },
+      tue: { color: "#16A085", rgba: "22,160,133" },
+      wed: { color: "#8E44AD", rgba: "142,68,173" },
+      thu: { color: "#2980B9", rgba: "41,128,185" },
+      sat: { color: "#E67E22", rgba: "230,126,34" },
+    };
+    const DAY_SEQS = { 2: ["mon", "wed"], 3: ["mon", "wed", "fri"], 4: ["mon", "tue", "thu", "sat"] };
+
+    function daysForPlan(plan) {
+      const n = (plan && plan.days) || 3;
+      const seq = DAY_SEQS[n] || DAY_SEQS[3];
+      return seq.map((key, i) => ({
+        key,
+        label: `День ${i + 1}`,
+        color: DAY_META[key].color,
+        bgGrad: `linear-gradient(135deg, rgba(${DAY_META[key].rgba},0.15) 0%, rgba(29,24,21,1) 100%)`,
+      }));
+    }
+
+    const LOWER_KEYS = ["squat", "rdl", "calf"];
+    const UPPER_KEYS = ["row", "floor", "ohp", "curl", "tricep"];
+
+    function workoutFor(phase, week, overrides, plan, dayIdx) {
       const list = [];
       list.push({
         key: "warmup", name: "Суставная разминка", reps: "3–5 мин", restSec: 0,
@@ -423,6 +469,12 @@
       });
       let exs = planExercises(plan);
       if (week === 1) exs = exs.filter((ex) => ex.key !== "rdl");
+      // Сплит верх/низ только для 4-дневного плана
+      if (plan && plan.days === 4 && typeof dayIdx === "number") {
+        const side = dayIdx % 2 === 0 ? LOWER_KEYS : UPPER_KEYS;
+        const half = exs.filter((ex) => side.includes(ex.key));
+        if (half.length) exs = half;
+      }
       exs.forEach((ex) => {
         const steps = cappedSteps(ex.key, week, plan);
         list.push({
@@ -442,11 +494,14 @@
     function isPhotoWeek(week) { return week % 2 === 1; }
 
     function emptyChecksForWeek(phase, week, overrides, plan) {
-      const wk = workoutFor(phase, week, overrides, plan);
-      const perDay = {};
-      wk.forEach((ex) => { perDay[ex.key] = Array.from({ length: ex.sets }, () => false); });
+      const days = daysForPlan(plan);
       const obj = {};
-      DAYS.forEach((d) => { obj[d.key] = JSON.parse(JSON.stringify(perDay)); });
+      days.forEach((d, i) => {
+        const wk = workoutFor(phase, week, overrides, plan, i);
+        const perDay = {};
+        wk.forEach((ex) => { perDay[ex.key] = Array.from({ length: ex.sets }, () => false); });
+        obj[d.key] = perDay;
+      });
       return obj;
     }
 
@@ -776,11 +831,12 @@
 
     /* ================= Блин + дуга прогресса + легенда дней ================= */
     function PlateBadge({ week, phase, currentChecks, overrides, plan, completedCount, len = 21 }) {
-      const list = workoutFor(phase, week, overrides, plan);
+      const days = daysForPlan(plan);
 
-      const dayStatuses = DAYS.map((d) => {
+      const dayStatuses = days.map((d, i) => {
         const checksForDay = currentChecks[d.key];
-        const isDone = checksForDay && list.every((ex) => {
+        const dayList = workoutFor(phase, week, overrides, plan, i);
+        const isDone = checksForDay && dayList.every((ex) => {
           const arr = Array.isArray(checksForDay[ex.key]) ? checksForDay[ex.key] : [Boolean(checksForDay[ex.key])];
           return arr.every(Boolean);
         });
@@ -992,8 +1048,8 @@
     /* ================= Карточка дня (+анимации перехода) ================= */
     function DayCard({ day, index, phase, week, overrides, plan, checksForDay, onToggleSet, onToggleAll,
                        bodyWeight, onBodyWeightChange, currentPhotoUrl, onPhotoPick, photoBusy, onOpenInfo,
-                       defaultOpen, onPreviewImage, isLocked, readOnly, animStage, soundOn }) {
-      const list = workoutFor(phase, week, overrides, plan);
+                       defaultOpen, onPreviewImage, isLocked, readOnly, animStage, soundOn, dayExList }) {
+      const list = dayExList || workoutFor(phase, week, overrides, plan, index);
       const allDone = list.every((ex) => {
         const arr = checksForDay && checksForDay[ex.key];
         return Array.isArray(arr) ? arr.every(Boolean) : Boolean(arr);
@@ -1371,6 +1427,7 @@
 
     /* ================= Онбординг ================= */
     function Onboarding({ onDone }) {
+      const [started, setStarted] = useState(false);
       const [step, setStep] = useState(0); // 0 анкета, 1 оборудование, 2 гантели, 3 карта тела, 4 генерация
       const [sex, setSex] = useState("m");
       const [height, setHeight] = useState("");
@@ -1379,9 +1436,10 @@
       const [equip, setEquip] = useState(new Set(["db"]));
       const [useCustomDb, setUseCustomDb] = useState(true);
       const [dbHandle, setDbHandle] = useState("2");
-      const [dbPlates, setDbPlates] = useState({ "1.25": 4, "2.5": 4, "5": 0 });
+      const [dbPlates, setDbPlates] = useState({ "0.5": 0, "1.25": 4, "2": 0, "2.5": 4, "5": 0 });
       const [muscles, setMuscles] = useState(new Set());
       const [genStep, setGenStep] = useState(-1);
+      const [planDays, setPlanDays] = useState(3);
 
       const tgUser = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || null;
       const hasDb = equip.has("db");
@@ -1410,10 +1468,12 @@
       const dbMax = dbEngine ? dbEngine.opts[dbEngine.opts.length - 1].t : null;
 
       const startGen = () => {
-        setStep(4);
+        setStep(5);
         [0, 1, 2, 3].forEach((i) => setTimeout(() => setGenStep(i), 400 + i * 700));
         setTimeout(() => setGenStep(4), 3150);
         setTimeout(() => {
+          const pl = buildPlan([...muscles], dbEngine);
+          pl.days = planDays;
           onDone({
             profile: {
               sex,
@@ -1421,11 +1481,12 @@
               weight: parseFloat(weight) || null,
               exp,
               equip: [...equip],
+              days: planDays,
               muscles: [...muscles],
               db: dbEngine ? { handle: dbEngine.handle, counts: dbEngine.counts } : null,
               name: tgUser ? (tgUser.first_name || "") : "",
             },
-            plan: buildPlan([...muscles], dbEngine),
+            plan: pl,
           });
         }, 3750);
       };
@@ -1433,6 +1494,31 @@
       const genStepsLabels = ["Анализирую параметры", "Подбираю упражнения", "Рассчитываю стартовые веса", "Строю прогрессию на 21 неделю"];
       const previewPlan = useMemo(() => buildPlan([...muscles], dbEngine), [muscles, dbEngine]);
       const plannedPreview = previewPlan.keys.slice(0, 4);
+
+      if (!started) {
+        return (
+          <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", padding: "24px 20px calc(32px + env(safe-area-inset-bottom))" }}>
+            <div className="nf-rise" style={{ maxWidth: 420, margin: "0 auto", width: "100%" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ width: 40, height: 40, borderRadius: "50%", background: "radial-gradient(circle at 40% 35%,#3A2E26,#171310)", border: `2.5px solid ${C.accent}` }} />
+                <span style={{ fontSize: 13, fontWeight: 900, letterSpacing: ".24em", color: C.textMuted }}>NEUROFIT</span>
+              </div>
+              <div style={{ fontSize: 26, fontWeight: 900, marginTop: 22, lineHeight: 1.2 }}>
+                Добро пожаловать в<br />NeuroFit Tracker
+              </div>
+              <div style={{ color: C.textMuted, fontSize: 14, marginTop: 12, lineHeight: 1.6 }}>
+                Персональный трекер тренировок: программа собирается под тебя, веса растут автоматически,
+                а прогресс видно с первой недели.
+                {tgUser ? <><br /><br />Рад видеть, <b style={{ color: C.text }}>{tgUser.first_name}</b>!</> : null}
+              </div>
+              <button onClick={() => { triggerHaptic("light"); setStarted(true); }}
+                      style={{ marginTop: 28, width: "100%", padding: 15, border: "none", borderRadius: 12, background: C.accent, color: "#fff", fontSize: 15.5, fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 20px rgba(192,57,43,.35)" }}>
+                Приступим →
+              </button>
+            </div>
+          </div>
+        );
+      }
 
       return (
         <div style={{ minHeight: "100vh", padding: "20px 16px calc(24px + env(safe-area-inset-bottom))" }}>
@@ -1496,32 +1582,32 @@
             {step === 1 && (
               <div className="nf-rise">
                 <div style={{ fontSize: 21, fontWeight: 900, marginTop: 18 }}>Какое оборудование есть?</div>
-                <div style={{ color: C.textMuted, fontSize: 13, marginTop: 6 }}>
-                  Можно выбрать несколько. Пока программа собирается для гантелей — остальное подключим следом.
+                <div style={{ color: C.textMuted, fontSize: 13, marginTop: 6, lineHeight: 1.5 }}>
+                  Пока программа собирается для <b>гантели</b> — остальные категории уже в работе.
                 </div>
                 <div className="chipsbar" style={{ marginTop: 16 }}>
                   {EQUIPMENT.map(([id, n]) => {
                     const on = equip.has(id);
+                    const supported = id === "db";
                     return (
                       <button key={id}
-                        onClick={() => {
-                          triggerHaptic("selection");
-                          setEquip((prev) => { const nx = new Set(prev); nx.has(id) ? nx.delete(id) : nx.add(id); return nx; });
-                        }}
-                        style={{ border: `1px solid ${on ? C.accent : C.border}`, background: on ? C.accentSoft : C.surface, color: on ? C.text : C.textMuted, borderRadius: 999, fontSize: 13, fontWeight: 700, padding: "9px 16px", cursor: "pointer" }}>
+                        onClick={() => { if (supported) { triggerHaptic("selection"); setEquip(new Set(["db"])); } }}
+                        style={{
+                          position: "relative",
+                          border: `1px solid ${on ? C.accent : C.border}`,
+                          background: on ? C.accentSoft : C.surface,
+                          color: supported ? (on ? C.text : C.textMuted) : C.textFaint,
+                          opacity: supported ? 1 : 0.55,
+                          borderRadius: 999, fontSize: 13, fontWeight: 700, padding: "9px 16px",
+                          cursor: supported ? "pointer" : "not-allowed"
+                        }}>
                         {n}
+                        {!supported && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: "#E67E22", textTransform: "uppercase" }}>скоро</span>}
                       </button>
                     );
                   })}
                 </div>
-                <div style={{ marginTop: 12 }}>
-                  <button
-                    onClick={() => setEquip((prev) => prev.size === EQUIPMENT.length ? new Set() : new Set(EQUIPMENT.map((e) => e[0])))}
-                    style={{ border: `1px dashed ${C.border}`, background: "none", color: C.textFaint, borderRadius: 999, fontSize: 12, fontWeight: 700, padding: "8px 14px", cursor: "pointer" }}>
-                    {equip.size === EQUIPMENT.length ? "Снять всё" : "Выбрать всё"}
-                  </button>
-                </div>
-                <button onClick={() => { triggerHaptic("light"); setStep(afterEquipStep); }}
+                <button onClick={() => { triggerHaptic("light"); setStep(2); }}
                         style={{ marginTop: 22, width: "100%", padding: 14, border: "none", borderRadius: 12, background: C.accent, color: "#fff", fontSize: 14.5, fontWeight: 800, cursor: "pointer" }}>
                   Далее →
                 </button>
@@ -1532,6 +1618,46 @@
             )}
 
             {step === 2 && (
+              <div className="nf-rise">
+                <div style={{ fontSize: 21, fontWeight: 900, marginTop: 18 }}>Сколько дней в неделю?</div>
+                <div style={{ color: C.textMuted, fontSize: 13, marginTop: 6, lineHeight: 1.5 }}>
+                  Честный совет: новичку лучше <b>3 раза</b> — каждая мышца прорабатывается трижды в неделю и успевает восстановиться. Тренироваться каждый день нельзя: мышцам нужен отдых.
+                </div>
+
+                {[
+                  { n: 2, t: "2 раза", d: "Пн / Чт · всё тело — если график плотный" },
+                  { n: 3, t: "3 раза", d: "Пн / Ср / Пт · всё тело — золотой стандарт", rec: true },
+                  { n: 4, t: "4 раза", d: "Пн · Вт · Чт · Сб — сплит «верх / низ» для опытных" },
+                ].map((o) => {
+                  const on = planDays === o.n;
+                  return (
+                    <button key={o.n}
+                      onClick={() => { setPlanDays(o.n); triggerHaptic("selection"); }}
+                      style={{
+                        width: "100%", textAlign: "left", marginTop: 10, padding: "12px 14px", borderRadius: 12, cursor: "pointer",
+                        background: on ? C.accentSoft : C.surface,
+                        border: `1.5px solid ${on ? C.accent : C.border}`
+                      }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 15, fontWeight: 900, color: on ? C.text : C.textMuted }}>{o.t}</span>
+                        {o.rec && <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", background: C.done, color: "#fff", borderRadius: 5, padding: "2px 7px" }}>Рекомендуем</span>}
+                      </div>
+                      <div style={{ fontSize: 12, color: C.textMuted, marginTop: 4 }}>{o.d}</div>
+                    </button>
+                  );
+                })}
+
+                <button onClick={() => { triggerHaptic("light"); setStep(hasDb ? 3 : 4); }}
+                        style={{ marginTop: 20, width: "100%", padding: 14, border: "none", borderRadius: 12, background: C.accent, color: "#fff", fontSize: 14.5, fontWeight: 800, cursor: "pointer" }}>
+                  Далее →
+                </button>
+                <button onClick={() => setStep(1)} style={{ marginTop: 10, width: "100%", padding: 12, background: "none", border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>
+                  ← Назад
+                </button>
+              </div>
+            )}
+
+            {step === 3 && (
               <div className="nf-rise">
                 <div style={{ fontSize: 21, fontWeight: 900, marginTop: 18 }}>Твои гантели</div>
                 <div style={{ color: C.textMuted, fontSize: 13, marginTop: 6, lineHeight: 1.5 }}>
@@ -1545,30 +1671,35 @@
                   <span style={{ fontSize: 12, color: C.textFaint }}>кг</span>
                 </div>
 
-                <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
                   {PLATE_TYPES.map((p) => (
-                    <div key={p} style={{ display: "flex", alignItems: "center", gap: 10, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "9px 12px" }}>
+                    <div key={p} style={{ display: "flex", alignItems: "center", gap: 10, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "7px 12px" }}>
                       <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700 }}>Диски по {p} кг</span>
                       <button onClick={() => setDbPlates((s) => ({ ...s, [p]: Math.max(0, (parseInt(s[p]) || 0) - 1) }))}
-                              style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, cursor: "pointer", fontWeight: 800 }}>−</button>
-                      <span style={{ width: 28, textAlign: "center", fontSize: 15, fontWeight: 900, fontFamily: "ui-monospace, monospace" }}>{dbPlates[p] || 0}</span>
+                              style={{ width: 30, height: 30, borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, cursor: "pointer", fontWeight: 800 }}>−</button>
+                      <span style={{ width: 26, textAlign: "center", fontSize: 15, fontWeight: 900, fontFamily: "ui-monospace, monospace" }}>{dbPlates[p] || 0}</span>
                       <button onClick={() => setDbPlates((s) => ({ ...s, [p]: Math.min(10, (parseInt(s[p]) || 0) + 1) }))}
-                              style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, cursor: "pointer", fontWeight: 800 }}>+</button>
-                      <span style={{ width: 26, fontSize: 11.5, color: C.textFaint }}>шт</span>
+                              style={{ width: 30, height: 30, borderRadius: 8, border: `1px solid ${C.border}`, background: C.bg, color: C.text, cursor: "pointer", fontWeight: 800 }}>+</button>
+                      <span style={{ width: 24, fontSize: 11.5, color: C.textFaint }}>шт</span>
                     </div>
                   ))}
                 </div>
 
                 {dbEngine && dbMax != null && (
-                  <div style={{ marginTop: 12, background: C.accentSoft, border: `1px solid ${C.accentDim}`, borderRadius: 10, padding: "10px 12px", fontSize: 13 }}>
-                    🏋️ Максимум на одну гантель: <b>{dbMax} кг</b> · старт программы:{" "}
-                    <b>{dbEngine.starters.squat} кг</b> (присед)
+                  <div style={{ marginTop: 12, background: C.accentSoft, border: `1px solid ${C.accentDim}`, borderRadius: 10, padding: "10px 12px", fontSize: 13, lineHeight: 1.55 }}>
+                    🏋️ Максимальный вес одной гантели: <b>{dbMax} кг</b><br />
+                    <span style={{ fontSize: 12, color: C.textMuted }}>Стартовые веса под твои мышцы рассчитаем на следующем шаге</span>
                   </div>
                 )}
 
-                <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, fontSize: 12.5, color: C.textMuted, cursor: "pointer" }}>
-                  <input type="checkbox" checked={!useCustomDb} onChange={(e) => setUseCustomDb(!e.target.checked)} />
-                  Использовать стандартные веса программы (7.5 / 5 кг)
+                <div style={{ marginTop: 10, fontSize: 12, color: C.textFaint, lineHeight: 1.5 }}>
+                  💡 Не зацикливайся на цифрах: если вес даётся слишком легко — просто добавь одинаковые диски на обе стороны.
+                </div>
+
+                <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 12, fontSize: 12.5, color: C.textMuted, cursor: "pointer", lineHeight: 1.4 }}>
+                  <input type="checkbox" checked={!useCustomDb} onChange={(e) => setUseCustomDb(!e.target.checked)} style={{ marginTop: 2 }} />
+                  <span>Использовать стандартные веса программы<br />
+                  <span style={{ fontSize: 11, color: C.textFaint }}>(рассчитаны под новичка среднего телосложения ~75 кг; твои персональные — точнее)</span></span>
                 </label>
 
                 <button onClick={() => { triggerHaptic("light"); setStep(3); }}
@@ -1581,14 +1712,14 @@
               </div>
             )}
 
-            {step === 3 && (
+            {step === 4 && (
               <div className="nf-rise" style={{ paddingTop: 14 }}>
                 <BodyMap sex={sex} setSex={setSex} selected={muscles} setSelected={setMuscles} />
                 <button onClick={startGen}
                         style={{ marginTop: 18, width: "100%", padding: 14, border: "none", borderRadius: 12, background: C.accent, color: "#fff", fontSize: 14.5, fontWeight: 800, cursor: "pointer" }}>
                   Собрать программу
                 </button>
-                <button onClick={() => setStep(hasDb ? 2 : 1)} style={{ marginTop: 10, width: "100%", padding: 12, background: "none", border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>
+                <button onClick={() => setStep(hasDb ? 3 : 2)} style={{ marginTop: 10, width: "100%", padding: 12, background: "none", border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>
                   ← Назад
                 </button>
               </div>
@@ -1622,8 +1753,13 @@
                 {genStep >= 4 && (
                   <div className="nf-rise" style={{ marginTop: 16, background: "linear-gradient(135deg, rgba(76,154,107,.12), " + C.surface + ")", border: `1px solid rgba(76,154,107,.5)`, borderRadius: 14, padding: 14 }}>
                     <div style={{ fontSize: 15, fontWeight: 900 }}>Готово!</div>
+                    {previewPlan.narrowAdded && previewPlan.narrowAdded.length > 0 && (
+                      <div style={{ marginTop: 8, fontSize: 12.5, color: "#E67E22", fontWeight: 700 }}>
+                        ⚠ Выбрано мало мышц — для баланса добавили: {previewPlan.narrowAdded.map((k) => EX_BY_KEY[k] ? EX_BY_KEY[k].name : k).join(", ")}
+                      </div>
+                    )}
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-                      {["21 неделя", "3 дня / нед", "~45 мин", "гантели"].map((t) => (
+                      {["21 неделя", `${planDays} ${pluralRu(planDays, ["день", "дня", "дней"])} / нед`, "~45 мин", "гантели"].map((t) => (
                         <span key={t} style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, border: `1px solid ${C.border}`, borderRadius: 6, padding: "3px 8px" }}>{t}</span>
                       ))}
                     </div>
@@ -1779,12 +1915,16 @@
             Object.keys(cw).forEach((wKey) => {
               const wNum = Number(wKey);
               const ph = getPhaseForWeek(wNum);
-              const list = workoutFor(ph, wNum, cleanOverrides, saved.plan || null);
+              const savedPlan = saved.plan || null;
+              const days = daysForPlan(savedPlan);
               const wc = initialChecksByWeek[wNum];
-              const done = !!wc && DAYS.every((d) => wc[d.key] && list.every((ex) => {
-                const arr = Array.isArray(wc[d.key][ex.key]) ? wc[d.key][ex.key] : [Boolean(wc[d.key][ex.key])];
-                return arr.every(Boolean);
-              }));
+              const done = !!wc && days.every((d, i) => {
+                const list = workoutFor(ph, wNum, cleanOverrides, savedPlan, i);
+                return wc[d.key] && list.every((ex) => {
+                  const arr = Array.isArray(wc[d.key][ex.key]) ? wc[d.key][ex.key] : [Boolean(wc[d.key][ex.key])];
+                  return arr.every(Boolean);
+                });
+              });
               if (!done) delete cw[wKey];
             });
 
@@ -1823,7 +1963,11 @@
       const len = progLen(plan);
       const soundOn = !(profile && profile.sound === false);
 
-      const curList = useMemo(() => workoutFor(phase, week, overrides, plan), [phase, week, overrides, plan]);
+      const daysArr = useMemo(() => daysForPlan(plan), [plan]);
+      const dayLists = useMemo(
+        () => daysArr.map((_, i) => workoutFor(phase, week, overrides, plan, i)),
+        [daysArr, phase, week, overrides, plan]
+      );
 
       const currentChecks = useMemo(() => {
         if (checksByWeek[week]) return checksByWeek[week];
@@ -1832,13 +1976,16 @@
 
       const checkIsWeekDone = useCallback((targetWeek, checksData) => {
         const ph = getPhaseForWeek(targetWeek);
-        const list = workoutFor(ph, targetWeek, overrides, plan);
+        const days = daysForPlan(plan);
         const wChecks = (checksData || {})[targetWeek];
         if (!wChecks) return false;
-        return DAYS.every((d) => wChecks[d.key] && list.every((ex) => {
-          const arr = Array.isArray(wChecks[d.key][ex.key]) ? wChecks[d.key][ex.key] : [Boolean(wChecks[d.key][ex.key])];
-          return arr.every(Boolean);
-        }));
+        return days.every((d, i) => {
+          const list = workoutFor(ph, targetWeek, overrides, plan, i);
+          return wChecks[d.key] && list.every((ex) => {
+            const arr = Array.isArray(wChecks[d.key][ex.key]) ? wChecks[d.key][ex.key] : [Boolean(wChecks[d.key][ex.key])];
+            return arr.every(Boolean);
+          });
+        });
       }, [overrides, plan]);
 
       const isCurrentWeekDone = useMemo(() => checkIsWeekDone(week, checksByWeek) || !!completedWeeks[week],
@@ -1868,8 +2015,9 @@
 
       const workoutsDone = useMemo(() => {
         let n = 0;
+        const days = daysForPlan(plan);
         Object.values(checksByWeek).forEach((wc) => {
-          DAYS.forEach((d) => {
+          days.forEach((d) => {
             const c = wc[d.key];
             if (c && planKeysAll.every((k) => {
               const arr = c[k];
@@ -1878,7 +2026,7 @@
           });
         });
         return n;
-      }, [checksByWeek, planKeysAll]);
+      }, [checksByWeek, planKeysAll, plan]);
 
       /* ---------- авто-переход недели (оверлей) ---------- */
       const commitAdvance = useCallback((fromWeek) => {
@@ -1908,22 +2056,24 @@
         setDayAnim({ stage: "flash", idx: dayIdx });
         later(() => setDayAnim({ stage: "collapse", idx: dayIdx }), 900);
         later(() => setDayAnim({ stage: "toast", idx: dayIdx }), 1150);
-        if (dayIdx < DAYS.length - 1) {
+        if (dayIdx < daysArr.length - 1) {
           later(() => setDayAnim({ stage: "opening", idx: dayIdx + 1 }), 2900);
           later(() => setDayAnim(null), 4400);
         } else {
           later(() => setDayAnim(null), 2900);
         }
-      }, []);
+      }, [daysArr]);
 
       const dayIsDone = useCallback((dayKey, checksData) => {
         const c = (checksData || {})[dayKey];
         if (!c) return false;
-        return curList.every((ex) => {
+        const di = daysArr.findIndex((d) => d.key === dayKey);
+        const list = dayLists[di] || dayLists[0] || [];
+        return list.every((ex) => {
           const arr = c[ex.key];
           return Array.isArray(arr) ? arr.every(Boolean) : Boolean(arr);
         });
-      }, [curList]);
+      }, [daysArr, dayLists]);
 
       const toggleSet = useCallback((dayKey, exKey, idx) => {
         if (advancingRef.current || interactionsDisabled) return;
@@ -1948,10 +2098,10 @@
           advancingRef.current = true;
           later(() => commitAdvance(week), 650);
         } else if (afterDone && !beforeDone) {
-          const dayIdx = DAYS.findIndex((d) => d.key === dayKey);
+          const dayIdx = daysArr.findIndex((d) => d.key === dayKey);
           startDayAnim(dayIdx);
         }
-      }, [week, checksByWeek, phase, overrides, plan, currentChecks, dayIsDone, checkIsWeekDone, interactionsDisabled, startDayAnim, commitAdvance]);
+      }, [week, checksByWeek, phase, overrides, plan, currentChecks, dayIsDone, checkIsWeekDone, interactionsDisabled, startDayAnim, commitAdvance, daysArr, len]);
 
       const toggleAll = useCallback((dayKey, value) => {
         if (advancingRef.current || interactionsDisabled) return;
@@ -1960,7 +2110,8 @@
 
         const nextWeekChecks = JSON.parse(JSON.stringify(checksByWeek[week] || emptyChecksForWeek(phase, week, overrides, plan)));
         if (!nextWeekChecks[dayKey]) return;
-        curList.forEach((ex) => {
+        const di = daysArr.findIndex((d) => d.key === dayKey);
+        (dayLists[di] || []).forEach((ex) => {
           nextWeekChecks[dayKey][ex.key] = Array.from({ length: ex.sets }, () => value);
         });
         const nextChecksByWeek = { ...checksByWeek, [week]: nextWeekChecks };
@@ -1973,10 +2124,10 @@
           advancingRef.current = true;
           later(() => commitAdvance(week), 650);
         } else if (value && afterDone && !beforeDone) {
-          const dayIdx = DAYS.findIndex((d) => d.key === dayKey);
+          const dayIdx = daysArr.findIndex((d) => d.key === dayKey);
           startDayAnim(dayIdx);
         }
-      }, [week, checksByWeek, phase, overrides, plan, curList, currentChecks, dayIsDone, checkIsWeekDone, interactionsDisabled, startDayAnim, commitAdvance]);
+      }, [week, checksByWeek, phase, overrides, plan, dayLists, daysArr, currentChecks, dayIsDone, checkIsWeekDone, interactionsDisabled, startDayAnim, commitAdvance, len]);
 
       const changeBodyWeight = useCallback((val) => {
         setBodyWeightLog((prev) => { const next = { ...prev }; if (val == null) delete next[week]; else next[week] = val; return next; });
@@ -2032,9 +2183,10 @@
         return <Onboarding onDone={finishOnboarding} />;
       }
 
-      const allDaysStatuses = DAYS.map((dayInfo) => {
+      const allDaysStatuses = daysArr.map((dayInfo, di) => {
         const c = currentChecks[dayInfo.key];
-        return !!c && curList.every((ex) => {
+        const list = dayLists[di] || [];
+        return !!c && list.every((ex) => {
           const arr = c[ex.key];
           return Array.isArray(arr) ? arr.every(Boolean) : Boolean(arr);
         });
@@ -2071,12 +2223,12 @@
                   <div style={{ fontSize: 16, marginBottom: 4 }}>🔒</div>
                   <div style={{ fontSize: 14, fontWeight: 800, color: "#E67E22", marginBottom: 2 }}>Неделя заблокирована</div>
                   <div style={{ fontSize: 12.5, color: C.textMuted }}>
-                    Чтобы открыть тренировки Недели {week}, сначала завершите все 3 дня Недели {week - 1}.
+                    Чтобы открыть тренировки Недели {week}, сначала завершите все {daysArr.length} тренировки Недели {week - 1}.
                   </div>
                 </div>
               )}
 
-              {DAYS.map((d, index) => {
+              {daysArr.map((d, index) => {
                 const shouldBeOpen = firstUndoneIndex === -1 ? (index === 0) : (index === firstUndoneIndex);
                 let animStage = null;
                 if (dayAnim) {
@@ -2086,6 +2238,7 @@
                 return (
                   <DayCard key={`${week}-${d.key}`} day={d} index={index} phase={phase} week={week} overrides={overrides} plan={plan}
                     checksForDay={currentChecks[d.key]} onToggleSet={toggleSet} onToggleAll={toggleAll}
+                    dayExList={dayLists[index]}
                     bodyWeight={bodyWeightLog[week] ?? null} onBodyWeightChange={changeBodyWeight}
                     currentPhotoUrl={currentPhotoUrl} onPhotoPick={pickPhoto} photoBusy={photoBusy}
                     onOpenInfo={setModalExercise} defaultOpen={shouldBeOpen} onPreviewImage={setPreviewImage}
@@ -2148,18 +2301,20 @@
           </div>
 
           {/* Оверлеи и модалки */}
-          <DayToast dayLabel={toastDayIdx != null ? DAYS[toastDayIdx].label : null}
-                    nextLabel={toastDayIdx != null && DAYS[toastDayIdx + 1] ? DAYS[toastDayIdx + 1].label : null} />
+          <DayToast dayLabel={toastDayIdx != null ? daysArr[toastDayIdx].label : null}
+                    nextLabel={toastDayIdx != null && daysArr[toastDayIdx + 1] ? daysArr[toastDayIdx + 1].label : null} />
           <WeekOverlay data={weekOverlay} />
           <InfoModal exercise={modalExercise} onClose={() => setModalExercise(null)} />
           <ImageModal src={previewImage} onClose={() => setPreviewImage(null)} />
-          <ConfirmModal
-            title="Сбросить всё с нуля?"
-            text="Будут удалены отметки, веса, вес тела и завершённые недели — и запустится анкета настройки заново. Фото на устройстве останутся. Действие необратимо."
-            confirmLabel="Сбросить" danger
-            onConfirm={doResetAll}
-            onClose={() => setConfirmReset(false)}
-          />
+          {confirmReset && (
+            <ConfirmModal
+              title="Сбросить всё с нуля?"
+              text="Будут удалены отметки, веса, вес тела и завершённые недели — и запустится анкета настройки заново. Фото на устройстве останутся. Действие необратимо."
+              confirmLabel="Сбросить" danger
+              onConfirm={doResetAll}
+              onClose={() => setConfirmReset(false)}
+            />
+          )}
         </div>
       );
     }
