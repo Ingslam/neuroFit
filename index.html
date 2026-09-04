@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#15120F" />
+    <title>NeuroFit Трекер</title>
+
+    <!--
+      Отладочная ловушка ошибок.
+      Показывается ТОЛЬКО если открыть с ?debug=1 или через deep-link ?startapp=debug.
+      Обычные пользователи её никогда не увидят: ошибки загрузки картинок/скриптов
+      не считаются фатальными, а React вшит в этот файл и не зависит от CDN.
+    -->
+    <script>
+      (function () {
+        var debug = false;
+        try {
+          debug =
+            /[?&]debug=1/.test(location.search) ||
+            /tgWebAppStartParam=debug/.test(location.hash + location.search);
+        } catch (e) {}
+        window.__nfDebug = debug;
+        if (!debug) return;
+        function show(msg) {
+          try {
+            var d = document.createElement("div");
+            d.style.cssText =
+              "position:fixed;top:0;left:0;right:0;z-index:99999;background:#6E1414;color:#fff;font:12px/1.5 ui-monospace,monospace;padding:10px 12px;white-space:pre-wrap;word-break:break-all;max-height:45vh;overflow:auto";
+            d.textContent = msg;
+            d.onclick = function () {
+              d.remove();
+            };
+            (document.body || document.documentElement).appendChild(d);
+          } catch (e) {}
+        }
+        window.addEventListener(
+          "error",
+          function (e) {
+            var t = e.target;
+            if (t && t !== window && t.tagName) return; // ресурсы (img/script) — не фатально
+            show("⚠ " + (e.message || "Ошибка") + (e.filename ? "\n" + String(e.filename).split("/").pop() + ":" + e.lineno : ""));
+          },
+          true
+        );
+        window.addEventListener("unhandledrejection", function (e) {
+          show("⚠ promise: " + (e.reason && e.reason.message ? e.reason.message : e.reason));
+        });
+      })();
+    </script>
+
+    <!-- Telegram Web App SDK. Если не загрузится (нет сети / открыто в браузере) — приложение работает в локальном режиме. -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
