@@ -1,0 +1,109 @@
+name: NeuroFit Daily Reminders
+
+on:
+  schedule:
+    # Запуск каждый день в 18:00 по Москве (15:00 UTC)
+    - cron: '0 15 * * *'
+  # Возможность ручного запуска кнопкой в GitHub Actions
+  workflow_dispatch:
+
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run reminders
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          node - << 'EOF'
+          const SUPABASE_URL = "https://tckwnjwbawyykrkmrjzt.supabase.co";
+          const SUPABASE_KEY = "sb_publishable_O6u1FFuGZTUJcw_eDtgQNA__Hfpj7xu";
+          const BOT_TOKEN = process.env.BOT_TOKEN;
+          const MINI_APP_URL = "https://jislame.github.io/neurofit/";
+
+          async function run() {
+            if (!BOT_TOKEN) {
+              console.error("❌ Секрет BOT_TOKEN не найден в Settings -> Secrets -> Actions!");
+              process.exit(1);
+            }
+
+            const today = new Date().getDay(); // 0 = Вс, 1 = Пн, 2 = Вт, 3 = Ср, 4 = Чт, 5 = Пт, 6 = Сб
+            console.log(`[NeuroFit Reminders] Запуск проверки. День недели: ${today}`);
+
+            try {
+              const res = await fetch(`${SUPABASE_URL}/rest/v1/neurofit_users?reminders_enabled=eq.true&select=*`, {
+                headers: {
+                  apikey: SUPABASE_KEY,
+                  Authorization: `Bearer ${SUPABASE_KEY}`,
+                },
+              });
+
+              if (!res.ok) {
+                console.error("Ошибка Supabase:", res.status, await res.text());
+                return;
+              }
+
+              const users = await res.json();
+              console.log(`Атлетов с включенными уведомлениями: ${users.length}`);
+              let sent = 0;
+
+              for (const u of users) {
+                if (!u.tg_id || u.tg_id === 0) continue;
+
+                const days = u.plan_days || 3;
+                let isWorkoutDay = false;
+
+                if (days === 2 && (today === 1 || today === 4)) {
+                  isWorkoutDay = true; // Пн, Чт
+                } else if (days === 3 && (today === 1 || today === 3 || today === 5)) {
+                  isWorkoutDay = true; // Пн, Ср, Пт
+                } else if (days === 4 && (today === 1 || today === 2 || today === 4 || today === 6)) {
+                  isWorkoutDay = true; // Пн, Вт, Чт, Сб
+                }
+
+                if (!isWorkoutDay) continue;
+
+                const name = u.first_name || "Атлет";
+                const week = u.current_week || 1;
+                const text = `Привет, ${name}! Сегодня день тренировки (Неделя ${week}) 💪\n\nТвоя программа готова. 35–40 минут работы над собой — и ты ещё на шаг ближе к цели!`;
+
+                try {
+                  const tgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      chat_id: u.tg_id,
+                      text,
+                      reply_markup: {
+                        inline_keyboard: [
+                          [{ text: "🏋️ Открыть тренировку", web_app: { url: MINI_APP_URL } }],
+                        ],
+                      },
+                    }),
+                  });
+                  const data = await tgRes.json();
+                  if (data.ok) {
+                    console.log(`✓ Отправлено напоминание для @${u.username || u.tg_id}`);
+                    sent++;
+                  } else {
+                    console.warn(`Не удалось отправить пользователю ${u.tg_id}:`, data.description);
+                  }
+                } catch (e) {
+                  console.error(`Ошибка пользователю ${u.tg_id}:`, e.message);
+                }
+              }
+
+              console.log(`[NeuroFit Reminders] Завершено. Отправлено: ${sent}`);
+            } catch (err) {
+              console.error("Ошибка выполнения скрипта:", err);
+            }
+          }
+
+          run();
+          EOF
