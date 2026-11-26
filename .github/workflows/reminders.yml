@@ -25,15 +25,15 @@ jobs:
           const SUPABASE_URL = "https://tckwnjwbawyykrkmrjzt.supabase.co";
           const SUPABASE_KEY = "sb_publishable_O6u1FFuGZTUJcw_eDtgQNA__Hfpj7xu";
           const BOT_TOKEN = process.env.BOT_TOKEN;
-          const MINI_APP_URL = "https://jislame.github.io/neurofit/";
+          const MINI_APP_URL = "https://ingslam.github.io/neuroFit/";
 
           async function run() {
             if (!BOT_TOKEN) {
-              console.error("❌ Секрет BOT_TOKEN не найден в Settings -> Secrets -> Actions!");
+              console.error("❌ Секрет BOT_TOKEN не найден в Secrets! Добавьте BOT_TOKEN в Settings -> Secrets and variables -> Actions");
               process.exit(1);
             }
 
-            const today = new Date().getDay(); // 0 = Вс, 1 = Пн, 2 = Вт, 3 = Ср, 4 = Чт, 5 = Пт, 6 = Сб
+            const today = new Date(Date.now() + 3 * 3600 * 1000).getUTCDay(); // МСК (UTC+3): 0 = Вс, 1 = Пн, 2 = Вт, 3 = Ср, 4 = Чт, 5 = Пт, 6 = Сб
             console.log(`[NeuroFit Reminders] Запуск проверки. День недели: ${today}`);
 
             try {
